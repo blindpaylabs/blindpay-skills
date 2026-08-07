@@ -1,40 +1,58 @@
-# API Keys
+# API keys
 
-## What is an API Key?
+Authenticate all BlindPay API requests with an instance-scoped API key created in the dashboard.
 
-An API key is a unique identifier that you can use to authenticate your requests to the BlindPay API.
+Source: https://blindpay.com/docs/learn/api-keys
 
-The API key will authenticate you to a **single instance**, so if you create an API key for instance X, it won't work for instance Y.
+An API key authenticates your requests to the BlindPay API. Each key is scoped to a single instance: a key created for one instance will not work against another, and a key created on a development instance will not work against a production instance.
 
-## Creating an API Key
+**Before you start:**
 
-You can only create an API key through the BlindPay Instance Dashboard.
+1. Create an account at https://app.blindpay.com/sign-up
+2. Create a development instance (see essentials/instances.md)
 
-Before creating an API key, you need to:
+## Create an API key
 
-1. [Create an account on BlindPay](https://app.blindpay.com/sign-up)
-2. Create a development instance
+Go to the [BlindPay dashboard](https://app.blindpay.com), select an instance, and open the **API Keys** tab.
 
-Then:
+![BlindPay dashboard API Keys tab](https://pub-4fabf5dd55154f19a0384b16f2b816d9.r2.dev/api_keys.jpg)
 
-1. Go to the [BlindPay Dashboard](https://app.blindpay.com/)
-2. Select an instance
-3. Click on the `API Keys` tab
-4. Create a new API key
+**Warning:**
 
-## Using the API Key
+Keys are shown once at creation. Copy and store them securely: you cannot retrieve the key value again after leaving the creation screen. The dashboard only ever displays a short prefix of the key afterward, for identification purposes.
 
-Pass the API key in the `Authorization` header:
+Creating a key requires a dashboard (user) session; it cannot be done from an existing API key. This prevents a compromised key from minting new keys for itself.
 
-```bash
-curl --request GET \
-  --url https://api.blindpay.com/v1/instances/in_000000000000/receivers \
+## Authenticate requests
+
+Pass the key as a bearer token in every request:
+
+```bash [cURL]
+curl https://api.blindpay.com/v1/instances/in_000000000000/customers \
   --header 'Authorization: Bearer YOUR_API_KEY'
 ```
 
-## Best Practices
+**Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
 
-- Store API keys securely (environment variables, secrets manager)
-- Never commit API keys to version control
-- Use different API keys for development and production instances
-- Rotate API keys periodically
+**Note:**
+
+Done. Authenticate all requests by passing the header `Authorization: Bearer YOUR_API_KEY`.
+
+## Security best practices
+
+- Never expose API keys in client-side code, mobile apps, or version control.
+- Use environment variables to inject keys at runtime instead of hardcoding them.
+- Rotate keys immediately if you suspect a key has been compromised: delete the old key and create a new one in the dashboard. There is no separate rotate endpoint; delete and recreate is the only path, and deleting a key revokes it immediately.
+- Use separate keys per environment: one for development, one for production. Keys created on a development instance will not work against a production instance, and vice versa.
+- Keys accept an IP whitelist at creation time via the API if your integration calls the API from a fixed set of servers.
+
+## Key types
+
+The dashboard currently creates one type of key, with full read and write access to the instance. A restricted or read-only key type with scoped permissions is not yet available, so every key for an instance carries the same level of access. Keep this in mind when deciding who on your team gets a key, since there is no way to limit a given key to, for example, read-only access.
+
+## Related
+
+- [Instances](instances.md): each API key is scoped to one instance
+- [Sandbox vs. production](sandbox-vs-production.md): use separate keys per environment
+- [Webhooks](webhooks.md): a complementary way to receive updates without polling the API
+- [Quickstart](../getting-started/quickstart-payin.md): see an API key used in your first request

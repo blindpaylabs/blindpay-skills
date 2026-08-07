@@ -1,60 +1,70 @@
 # Terms of Service
 
-## What is the Terms of Service?
+A legal agreement your customers must accept before you create them and start KYC.
 
-BlindPay's Terms of Service is a legal agreement that must be accepted by your customers before creating a receiver. This acceptance is required for regulatory compliance and allows BlindPay to legally provide services such as generating blockchain wallets and creating virtual accounts on behalf of your customers.
+Source: https://blindpay.com/docs/learn/terms-of-service
 
-The terms can only be accepted by users accessing the BlindPay URL `https://app.blindpay.com` on the client side, so all requests from servers will be ignored.
+BlindPay's terms of service is a legal agreement your customers must accept before you can create them. Acceptance is required for regulatory compliance and lets BlindPay provide services such as issuing blockchain wallets and virtual accounts on their behalf. The terms can only be accepted by a user on the client side at `https://app.blindpay.com`; requests from servers are ignored.
 
-## Generating Terms of Service URL
+## How it works
 
-Before generating a terms of service URL, you need to:
+When a user accepts the terms, BlindPay redirects them to your `redirect_url` with a `tos_id` query parameter and emits a `tos.accept` webhook. You pass that `tos_id` when [creating a customer](customers.md).
 
-1. [Create an account on BlindPay](https://app.blindpay.com/sign-up)
-2. Create a development instance
-3. Create your API key
+## Prerequisites
 
-> **Remember**: Replace `YOUR_SECRET_TOKEN` with your API key and `in_000000000000` with your instance ID.
+**Before you start:**
 
-> **Remember**: We only accept `uuid` in the `idempotency_key` field.
+1. Create an account at https://app.blindpay.com/sign-up
+2. Create a development instance (see essentials/instances.md)
+3. Create your API key (see essentials/api-keys.md)
 
-```bash
+## Generate a terms of service URL
+
+**Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
+
+**Note:**
+
+The API only accepts a `uuid` on the `idempotency_key` field. Reusing the same key on a second request is rejected.
+
+```bash [cURL]
 curl --request POST \
   --url https://api.blindpay.com/v1/e/instances/in_000000000000/tos \
-  --header 'Authorization: Bearer YOUR_SECRET_TOKEN' \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
     "idempotency_key": "<your_uuid>"
   }'
 ```
 
-The API will return a URL with the following query parameters:
+The response is a URL with the following query parameters:
 
-```
-https://app.blindpay.com/e/terms-of-service?session_token=eyJ0eXAi...&idempotency_key=5d8b149e-a55d-4b5b-a8f8-7c4fa315f854&redirect_url=
+```bash [URL example]
+https://app.blindpay.com/e/terms-of-service?session_token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...&idempotency_key=5d8b149e-a55d-4b5b-a8f8-7c4fa315f854&redirect_url=
 ```
 
 | Param | Required | Example |
-|-------|----------|---------|
-| session_token | yes | eyJ0eXAi... (JWT) |
-| idempotency_key | yes | 5d8b149e-a55d-4b5b-a8f8-7c4fa315f854 (UUID) |
-| redirect_url | no | https://yourapp.com/ |
-| receiver_id | no | re_000000000000 (mandatory for accepting a new TOS version) |
+| --- | --- | --- |
+| `session_token` | Yes | JWT |
+| `idempotency_key` | Yes | uuid |
+| `redirect_url` | No | `https://yourapp.com/` |
+| `customer_id` | No | `re_000000000000` (required when accepting a new terms of service version) |
 
-> We strongly recommend adding a `redirect_url` parameter. When users accept the terms of service, they will be automatically redirected back to your application.
+We strongly recommend adding a `redirect_url` so the customer lands back in your application after accepting.
 
-## Accepting Terms of Service
+## Accept the terms of service
 
-After the user accepts the terms of service, they will be redirected to the `redirect_url` with a query parameter `tos_id`.
+Open the generated URL for the customer to accept on `https://app.blindpay.com`. After acceptance, BlindPay redirects to your `redirect_url` and appends a `tos_id` query parameter. Copy that `tos_id`: you'll pass it as `tos_id` when you [create the customer](customers.md).
 
-You need to use this `tos_id` when creating a receiver.
+![Terms of service acceptance screen showing where to copy the tos_id](https://pub-4fabf5dd55154f19a0384b16f2b816d9.r2.dev/blindpay_tos_acceptance-min.jpg)
 
-You'll also receive a webhook event `tos.accept` when the terms of service is accepted.
+You also receive a `tos.accept` webhook event when the terms of service is accepted.
 
-## Accepting a New Version
+## Accepting a new version
 
-If BlindPay updates the terms of service, all requests to payout quote and payin quote endpoints will return an error with message `please_accept_terms_of_service`.
+Each `tos_id` is tied to the terms of service version active when it was generated, and can only ever be linked to one customer. If BlindPay updates the terms, calls to the payout quote and payin quote endpoints return an error with message `please_accept_terms_of_service` for customers whose acceptance predates the new version. Generate a new URL, set `customer_id` on it, and have the customer accept again. Once accepted, the quote endpoints stop returning the error.
 
-If you receive this, generate a new terms of service URL and make sure to set the `receiver_id` parameter on the URL returned.
+## Related
 
-After the customer accepts the new version, all quotes endpoints won't return the error anymore.
+- [Customers](customers.md): pass the `tos_id` when creating a customer
+- [Instances](instances.md) · [API keys](api-keys.md)
+- [KYC](../kb/kyc.md): verification levels and the full onboarding flow

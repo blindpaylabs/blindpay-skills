@@ -1,108 +1,81 @@
 # Webhooks
 
-## What are Webhooks?
+Receive real-time events for customers, payments, virtual accounts, wallets, and transfers instead of polling the API.
 
-Webhooks are a way to receive events from all BlindPay updates. For every receiver created, bank account created, and every payout/payin event, you will receive all the data in real time.
+Source: https://blindpay.com/docs/learn/webhooks
 
-## Available Events
+A webhook is an HTTP callback that BlindPay sends to your server when something changes: a payin completes, a customer is created, a virtual account is approved. Subscribe once and receive every event as it happens, instead of polling the API for status.
 
-| Event | Description |
-|-------|-------------|
-| `bankAccount.new` | Triggered when a bank account is created |
-| `receiver.new` | Triggered when a receiver is created |
-| `receiver.update` | Triggered when a receiver is updated |
-| `payout.new` | Triggered when a payout is started |
-| `payout.update` | Triggered when a payout receives an update |
-| `payout.complete` | Triggered when a payout is completed, failed, or refunded |
-| `payout.partnerFee` | Triggered when a payout is completed and a partner fee is delivered |
-| `payin.new` | Triggered when a payin is started |
-| `payin.update` | Triggered when a payin receives an update |
-| `payin.complete` | Triggered when a payin is completed or failed |
-| `payin.partnerFee` | Triggered when a payin is completed and a partner fee is delivered |
-| `tos.accept` | Triggered when terms of service is accepted |
-| `limitIncrease.new` | Triggered when a limit increase request is requested |
-| `limitIncrease.update` | Triggered when a limit increase request is updated |
+Webhooks are configured per [instance](instances.md). You can register up to 25 endpoints on the same instance if you want to split traffic across services.
 
-## Creating a Webhook
+## Create a webhook
 
-1. Go to the [BlindPay Dashboard](https://app.blindpay.com/)
-2. Select an instance
-3. Click on the `Webhooks` tab
-4. Add your webhook URL
+Register your endpoint URL on the instance. The URL must be `https`; local or private addresses are rejected. Pass an empty `events` array to receive every event, or list specific events to subscribe to only those.
 
-For testing, you can use [Webhook Cool](https://webhook.cool/) to get a unique URL to receive events.
+**Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
 
-## Verifying Webhooks
-
-Each webhook call includes verification headers to ensure the request is authentic.
-
-### Headers
-
-| Header | Description |
-|--------|-------------|
-| `svix-id` | Unique message identifier (same when webhook is resent) |
-| `svix-timestamp` | Timestamp in seconds since epoch |
-| `svix-signature` | Base64 encoded list of signatures (space delimited) |
-
-### Verification Process
-
-**Step 1**: Construct the signed content
-
-```javascript
-const signedContent = `${svix_id}.${svix_timestamp}.${body}`
+```bash [cURL]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/webhook-endpoints \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "url": "https://example.com/webhook",
+    "events": []
+  }'
 ```
 
-**Step 2**: Calculate the expected signature using HMAC-SHA256
+The response returns the endpoint ID (`we_...`). To verify the signatures on incoming calls, fetch the endpoint's signing secret:
 
-```javascript
-const crypto = require('node:crypto')
-
-// Extract the base64 portion of your signing secret (after whsec_ prefix)
-const secretBytes = require('node:buffer').Buffer.from(secret.split('_')[1], 'base64')
-
-const signature = crypto
-  .createHmac('sha256', secretBytes)
-  .update(signedContent)
-  .digest('base64')
+```bash [cURL]
+curl --request GET \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/webhook-endpoints/we_000000000000/secret \
+  --header 'Authorization: Bearer YOUR_API_KEY'
 ```
 
-**Step 3**: Compare signatures
+This returns `{ "key": "whsec_..." }`; see [Verification](webhooks-verification.md) for how to use it.
 
-The `svix-signature` header contains space-delimited signatures with version prefixes (e.g., `v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=`).
+You can also manage endpoints from the [BlindPay dashboard](https://app.blindpay.com), under the instance's **Webhooks** tab.
 
-- Remove the version prefix (e.g., `v1,`) before comparing
-- Use constant-time string comparison to prevent timing attacks
+For quick testing before you have a real handler, point the endpoint at [webhook.cool](https://webhook.cool/): it gives you a temporary URL that logs every incoming request so you can inspect a payload first.
 
-**Step 4**: Verify timestamp
+**Abstracted flavor (bank-rails framing, fiat-first API surface)**
 
-Compare `svix-timestamp` against your system time to prevent replay attacks.
+### Key events for fiat
 
-### Example Verification
+Working with the fiat flavor, you will listen most often to:
 
-> To get your `secret`, go to BlindPay Dashboard > Open your instance > Webhooks > Click on the ellipsis button and click on `Get secret`.
+- `virtualAccount.complete`: the account is approved and ready to receive deposits
+- `payin.complete`: a deposit arrived and settled
+- `payout.complete`: a bank transfer was sent, failed, or was refunded
 
-```javascript
-const crypto = require('node:crypto')
+See [Events](webhooks-events.md) for the full catalog.
 
-// Example values
-const secret = 'whsec_plJ3nmyCDGBKInavdOK15jsl'
-const payload = '{"event_type":"ping","data":{"success":true}}'
-const msg_id = 'msg_loFOjxBNrRLzqYUf'
-const timestamp = '1731705121'
+**Advanced flavor (stablecoin and blockchain mechanics)**
 
-// Construct signed content
-const signedContent = `${msg_id}.${timestamp}.${payload}`
+### Key events for stablecoin
 
-// Calculate signature
-const secretBytes = require('node:buffer').Buffer.from(secret.split('_')[1], 'base64')
+Working with the stablecoin flavor, you will listen most often to:
 
-const signature = crypto
-  .createHmac('sha256', secretBytes)
-  .update(signedContent)
-  .digest('base64')
+- `wallet.inbound`: stablecoins were deposited into a managed wallet
+- `payin.complete`: fiat was received and stablecoins were delivered
+- `payout.complete`: stablecoins were pulled and fiat was sent
 
-console.log(`v1,${signature}`)
-// Expected: v1,rAvfW3dJ/X/qxhsaXPOyyCGmRKsaKWcsNccKXlIktD0=
-```
+See [Events](webhooks-events.md) for the full catalog.
 
-> **Warning**: Never modify the request body before verification, as even small changes will invalidate the signature.
+**Note:**
+
+Every webhook call is signed. Verify the `svix-id`, `svix-timestamp`, and `svix-signature` headers before trusting a payload; see Verification for the full process.
+
+## In this section
+
+- [Events](webhooks-events.md): the full event catalog, payload shapes, and when each one fires
+- [Verification](webhooks-verification.md): how to verify the signature headers on every call
+
+## Related
+
+- [Instances](instances.md): webhooks are configured per instance
+- [API keys](api-keys.md): authenticate the rest of the API alongside your webhook endpoint
+- [Partner fees](partner-fees.md): how partner fee tracking fields appear on payin/payout webhooks
+- [Payin quickstart](../getting-started/quickstart-payin.md): see webhooks in a full payment flow
+- [Payout quickstart](../getting-started/quickstart-payout.md): see webhooks in a payout flow

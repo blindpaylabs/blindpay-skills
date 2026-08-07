@@ -7,16 +7,17 @@ The official [Agent Skills](https://agentskills.io) for [BlindPay](https://blind
 
 ## What These Skills Do
 
-These skills provide AI assistants (Cursor, Claude Code, Codex, etc.) with domain knowledge for integrating BlindPay's stablecoin payment infrastructure. They enable AI assistants to:
+These skills provide AI assistants (Cursor, Claude Code, Codex, etc.) with domain knowledge for integrating BlindPay's payment infrastructure. They cover both flavors of the API: the bank-rails view (virtual accounts, payins, payouts) and the stablecoin view (wallets, chains, on-chain authorization, transfers). They enable AI assistants to:
 
-- Understand payout flows (stablecoin to fiat)
-- Understand payin flows (fiat to stablecoin)
-- Create and manage receivers with proper KYC/KYB
-- Add bank accounts for different payment rails (ACH, Wire, PIX, SPEI, SWIFT)
-- Generate quotes and handle token approvals
-- Set up virtual accounts and offramp wallets
-- Configure webhooks and handle events
-- And more...
+- Understand payout flows (money out to a bank account, on any supported rail)
+- Understand payin flows (money in from a bank account, delivered as stablecoin)
+- Create and manage customers with the right KYC/KYB level, and handle RFIs and limit increases
+- Add bank accounts for every payment method (ACH, wire, RTP, SWIFT, Pix, SPEI, ACH COP, Transfers 3.0, SEPA)
+- Generate quotes and authorize funds per network (ERC-20 approve, Stellar XDR, Solana delegation)
+- Set up virtual accounts, managed wallets, blockchain wallets and offramp wallets
+- Move stablecoins with transfer quotes and transfers
+- Configure webhooks, verify signatures and handle every event
+- Answer compliance and coverage questions from the knowledge base (supported countries, cut-off times, prohibited activities, document requirements)
 
 ## Installation
 
@@ -51,11 +52,13 @@ Once installed, skills are automatically activated when relevant tasks are detec
 ```
 "Explain the complete payout flow from quote to execution"
 
-"Walk me through creating a receiver with enhanced KYC"
+"Walk me through creating a customer with enhanced KYC"
 
 "How do I create a SWIFT bank account?"
 
-"What are the KYC requirements for a business receiver?"
+"What are the KYB requirements for a business customer?"
+
+"Issue a virtual account for this customer and handle the payin webhooks"
 
 "How do I test payouts using the USDB test token?"
 ```

@@ -1,89 +1,139 @@
-# Partner Fees
+# Partner fees
 
-## What are Partner Fees?
+Add percentage or flat fees to your customers' transactions and withdraw the accumulated revenue monthly.
 
-Partner fees allow you to earn revenue from every transaction processed through BlindPay. You can add these fees on top of each transaction, and BlindPay will automatically collect them from your customers and share them with you at the end of each payin and payout.
+Source: https://blindpay.com/docs/learn/partner-fees
 
-## Types of Partner Fees
+## What it is
 
-You can configure two types of fees:
+A partner fee is a markup you add on top of transactions processed through BlindPay. BlindPay collects the fee from your customer during each transaction, accumulates it over the calendar month, and releases the balance to you for withdrawal on the first day of the following month.
 
-1. **Percentage Fees**: A percentage of the transaction amount
-2. **Flat Fees**: A fixed amount per transaction
+## Fee types
 
-These fees can be set independently for:
+You can configure two types of fees, set independently for payins and payouts:
 
-- Payins (fiat to stablecoin)
-- Payouts (stablecoin to fiat)
+| Type | Description |
+| --- | --- |
+| Percentage | A percentage of the transaction amount |
+| Flat | A fixed amount per transaction |
 
-## Configuring Partner Fees
+## Monthly collection cycle
 
-1. Go to the [BlindPay Dashboard](https://app.blindpay.com/)
-2. Navigate to `Settings > Partner Fees`
-3. Configure your desired fees for both payins and payouts
+Partner fees follow a monthly collection and withdrawal cycle:
 
-## Partner Fee Tracking in API Responses
+- Fees are collected automatically from your customer during each transaction, throughout the month.
+- All collected fees accumulate over the calendar month.
+- On the first day of the following month, the total balance is released and becomes available for withdrawal.
+- BlindPay nets your outstanding invoice out of the accumulated fees first. You never pay your BlindPay invoice separately; you receive the net amount.
 
-### Partner Fee Amount
+You receive a `payin.partnerFee` or `payout.partnerFee` webhook event as each fee is collected. Track collection status through the `tracking_partner_fee` object in quote and transaction responses.
 
-Each payin quote and payout quote object includes a `partner_fee_amount` field:
+## Configure a partner fee
 
-```json
-{
-  "id": "qu_000000000000",
-  "amount": "100.00",
-  "partner_fee_amount": "1.00"
-}
+### Create a fee configuration
+
+Create a fee configuration for payins, payouts, or both. Percentage fees are in basis points (`100` means 1%, capped at `1000` for 10%); flat fees are integers in minor units (`200` means $2.00).
+
+```bash [cURL]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/partner-fees \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "Display Name",
+    "payin_percentage_fee": 100,
+    "payin_flat_fee": 0,
+    "payout_percentage_fee": 0,
+    "payout_flat_fee": 200
+  }'
 ```
 
-### Partner Fee Tracking Object
+Save the `id` from the response: this is your partner fee ID (`pf_...`). You can also manage fee configurations from the [BlindPay dashboard](https://app.blindpay.com), under the instance's Partner Fees tab.
 
-You'll also see a `tracking_partner_fee` object with real-time status updates:
+### Pass it in your quote requests
 
-```json
-{
-  "id": "po_000000000000",
-  "tracking_partner_fee": {
-    "step": "on_hold",
-    "transaction_hash": "0x1234567890abcdef...",
-    "completed_at": "2024-01-15T14:30:00.000Z"
+Reference the `partner_fee_id` in a payin quote, payout quote, or transfer quote to apply that fee to the transaction.
+
+```bash [cURL]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/payin-quotes \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "blockchain_wallet_id": "bw_000000000000",
+    "currency_type": "sender",
+    "cover_fees": false,
+    "request_amount": 10000,
+    "payment_method": "ach",
+    "token": "USDC",
+    "partner_fee_id": "pf_000000000000"
+  }'
+```
+
+```js [index.js]
+const response = await fetch(
+  'https://api.blindpay.com/v1/instances/in_000000000000/payin-quotes',
+  {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer YOUR_API_KEY',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      blockchain_wallet_id: 'bw_000000000000',
+      currency_type: 'sender',
+      cover_fees: false,
+      request_amount: 10000,
+      payment_method: 'ach',
+      token: 'USDC',
+      partner_fee_id: 'pf_000000000000',
+    }),
   }
-}
+)
+
+const data = await response.json()
 ```
 
-This allows you to:
+**Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
 
-- Monitor the status of your partner fee delivery
-- Get the transaction hash when the fee is delivered
-- Know exactly when the fee was completed
+## Quote response fields
 
-## Fee Collection and Distribution
+Each payin quote, payout quote, and transfer quote response includes:
 
-- Fees are automatically collected from your customers during each transaction
-- Partner fees are delivered to your account when the transaction is completed
-- You'll receive a `payout.partnerFee` or `payin.partnerFee` webhook event when fees are delivered
-- Track fee delivery status through the `tracking_partner_fee` object in API responses
+| Field | Description |
+| --- | --- |
+| `partner_fee_amount` | Exact amount collected as a partner fee for this transaction |
+| `tracking_partner_fee.status` | Collection status |
+| `tracking_partner_fee.transaction_hash` | On-chain hash when the fee is delivered |
+| `tracking_partner_fee.completed_at` | Timestamp when fee delivery completed |
 
 ## Example
 
-If you configure:
-- A 1% fee for payins
-- A $1 flat fee for payouts
+A 1% payin fee and a $2.00 flat payout fee configured on the same instance:
 
-For a $100 payin:
-- Your customer pays $101 ($100 + 1% fee)
-- You receive $1 in partner fees
-- API response shows `partner_fee_amount: "1.00"`
+| Transaction | Customer pays | Partner fee collected |
+| --- | --- | --- |
+| $100 payin | $101.00 | $1.00 |
+| $100 payout | $102.00 | $2.00 |
 
-For a $100 payout:
-- Your customer pays $101 ($100 + $1 flat fee)
-- You receive $1 in partner fees
-- API response shows `partner_fee_amount: "1.00"`
+Monthly settlement example:
 
-## Best Practices
+| | Amount |
+| --- | --- |
+| Total partner fees collected in January | $500.00 |
+| BlindPay invoice for January | $250.00 |
+| Available for withdrawal on February 1 | $250.00 |
 
-- Consider your business model when setting fees
-- Be transparent with your customers about any additional fees
-- Monitor your fee earnings through the dashboard
-- Use webhooks to track fee deliveries in real-time
-- Check the `tracking_partner_fee` object to monitor fee delivery status
+## Webhooks
+
+**Note:**
+
+Subscribe to `payin.partnerFee` and `payout.partnerFee` to track fee collection in real time, instead of polling quote or transaction objects.
+
+## Related
+
+- [Webhooks](webhooks.md): full event reference and signature verification
+- [Billing](billing.md): how BlindPay invoices your account
+- [Fiat receive](../payins/payins.md): payin quotes that accept `partner_fee_id`
+- [Fiat send](../payouts/payouts.md): payout quotes that accept `partner_fee_id`
+- [Stablecoin send](../wallets/send.md): transfer quotes that accept `partner_fee_id`

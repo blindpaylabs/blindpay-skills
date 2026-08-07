@@ -1,32 +1,61 @@
 # Instances
 
-## What is an Instance?
+Instances are isolated BlindPay environments, one per stage of your stack, created in the dashboard.
 
-An instance is an environment in which you can try all BlindPay features.
+Source: https://blindpay.com/docs/learn/instances
 
-If your company has multiple environments (sandbox, staging, production), you can create a single instance for each one.
+An instance is an isolated BlindPay environment. If your product has separate development, staging, and production environments, create one instance for each. All features live inside an instance: customers, bank accounts, wallets, virtual accounts, payouts, and payins.
 
-You **cannot** create instances through the API; you must create them through the [BlindPay Dashboard](https://app.blindpay.com/).
+Instances are created through the [BlindPay dashboard](https://app.blindpay.com). You cannot create them via the API.
 
-## Development vs Production
+Each instance is either a `development` or `production` instance. Both expose the same features but differ in KYC handling, network availability, and whether fiat actually moves.
 
-> **Remember**: All payouts made on development instances will not go through the fiat payment rails, so all fiat payment steps will be skipped.
+**Note:**
+
+All payouts and payins made on development instances skip the real fiat payment rails. Payouts do not move real money, and payins auto-complete a simulated deposit instead of waiting for a real bank transfer.
+
+## Development vs. production
 
 | Feature | Development | Production |
-|---------|-------------|------------|
-| Receivers | ✅ | ✅ |
-| Bank Accounts | ✅ | ✅ |
-| Payout Quotes | ✅ | ✅ |
-| Payouts | ✅ | ✅ |
-| Payin Quotes | ✅ | ✅ |
-| Payins | ✅ | ✅ |
-| KYC | Auto approve | Automatic or manual review |
-| Networks | Eth Sepolia, Base Sepolia, Arbitrum Sepolia, Polygon Amoy, Stellar Testnet | Base, Polygon, Arbitrum, Stellar |
-| API Keys | ✅ | ✅ |
-| Webhooks | ✅ | ✅ |
+| --- | --- | --- |
+| Customers | Supported | Supported |
+| Bank accounts | Supported | Supported |
+| Payout quotes | Supported | Supported |
+| Payouts | Supported (no real fiat movement) | Supported |
+| Payin quotes | Supported | Supported |
+| Payins | Supported (auto-completes in ~30s) | Supported |
+| KYC | Auto-approved | Automated (~60s) or manual review |
+| EVM networks | `sepolia`, `base_sepolia`, `arbitrum_sepolia`, `polygon_amoy` | `ethereum`, `base`, `polygon`, `arbitrum` |
+| Stellar | Testnet | Mainnet |
+| Solana | Devnet | Mainnet |
+| Tron | N/A | Mainnet (beta) |
+| API keys | Supported | Supported |
+| Webhooks | Supported | Supported |
 
-## Creating an Instance
+On development instances, use USDB as the test stablecoin: a BlindPay-issued test token you can mint freely instead of sourcing real USDC or USDT. See [Sandbox vs. production](sandbox-vs-production.md) for the full testing workflow.
 
-1. [Create an account on BlindPay](https://app.blindpay.com/sign-up)
-2. Go to the [BlindPay Dashboard](https://app.blindpay.com/)
-3. Click on the `Create instance` button
+## Create an instance
+
+### Open the dashboard
+
+Go to the [BlindPay dashboard](https://app.blindpay.com) and click **Create instance**.
+
+### Choose an environment
+
+Choose whether the new instance is `development` or `production`. Development instances are ready immediately.
+
+![Create instance screen in the BlindPay dashboard](https://pub-4fabf5dd55154f19a0384b16f2b816d9.r2.dev/Frame%201216401961.jpg)
+
+### Wait for activation (production only)
+
+New production instances may take up to 3 business days to set up. See [Cut-off times](../kb/cut-off-times.md) for full SLAs.
+
+## API keys are per-instance
+
+An API key authenticates requests to one instance only. A key created for instance A will not work against instance B, even within the same organization. See [API keys](api-keys.md) to create and manage keys.
+
+## Related
+
+- [Sandbox vs. production](sandbox-vs-production.md): behavior differences in depth
+- [API keys](api-keys.md): create and manage instance keys
+- [Billing](billing.md): how usage is charged per instance
