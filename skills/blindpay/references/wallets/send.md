@@ -10,7 +10,7 @@ If you want the funds to leave as fiat in a bank account instead, that's a [payo
 
 **Warning:**
 
-Transfers are in beta. For now, only same-token, same-network transfers are supported: the destination token and network must match the source wallet's. Cross-chain and cross-token conversion is planned but not yet available.
+Transfers are in beta. USDC transfers can move across chains (Ethereum, Polygon, Base, Arbitrum) using [Circle CCTP v2](transfer-quotes.md#cross-chain-usdc-transfers-circle-cctp-v2); every other token still requires the destination network to match the source wallet's. There is no token conversion.
 
 ## How it works
 
@@ -23,7 +23,7 @@ Every transfer follows the same two-step flow as a payin or payout: create a quo
 
 - **Source**: a managed wallet (`wallet_id`, `bl_...`) that holds the stablecoin balance
 - **Destination**: another managed wallet's address, or any external blockchain address the receiver controls
-- **Token and network**: must be identical on both sides while the feature is in beta
+- **Token and network**: must be identical on both sides, except a USDC transfer can cross chains via Circle CCTP v2 (Ethereum, Polygon, Base, Arbitrum)
 
 Transfer quotes are consumed the same way payin and payout quotes are: create one, then execute against its ID before it expires. Because there is no fiat conversion involved, the quote step exists mainly to lock in the amount and destination, not to price an exchange rate. The transfer quote expires in 15 seconds, the shortest of any BlindPay quote.
 

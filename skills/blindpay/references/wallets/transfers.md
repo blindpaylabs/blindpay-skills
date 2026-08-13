@@ -8,7 +8,7 @@ A transfer is the object that actually moves stablecoins: it consumes a [transfe
 
 **Warning:**
 
-Transfers are in beta. Only same-token, same-network moves are supported today: the destination token and network must match the source wallet's exactly.
+Transfers are in beta. USDC moves can now cross chains between Ethereum, Polygon, Base, and Arbitrum using [Circle CCTP v2](transfer-quotes.md#cross-chain-usdc-transfers-circle-cctp-v2); every other token still requires the destination network to match the source wallet's exactly.
 
 ## How it works
 
@@ -67,9 +67,13 @@ curl https://api.blindpay.com/v1/instances/in_000000000000/transfers \
 
 Check `tracking_complete` alongside `status` when building a detailed view: it carries additional detail about the send once the transfer confirms.
 
+**Note:**
+
+For a cross-chain USDC transfer, `tracking_bridge_swap` tracks the burn on the source chain and `tracking_complete` tracks the mint on the destination chain. A same-network transfer only ever uses `tracking_complete`.
+
 ## Testing
 
-Transfers do not use the `66600`/`77700` sentinel amounts that payins and payouts support. On a development instance, a transfer executes against the sandbox `USDB` token on the corresponding testnet and confirms once the network finalizes the send.
+Transfers do not use the `66600`/`77700` sentinel amounts that payins and payouts support. On a development instance, a same-network transfer executes against the sandbox `USDB` token on the corresponding testnet and confirms once the network finalizes the send. A cross-chain USDC transfer is the exception: it uses real testnet USDC, not USDB, since [Circle CCTP v2](transfer-quotes.md#cross-chain-usdc-transfers-circle-cctp-v2) can only move native USDC.
 
 ## Webhooks
 

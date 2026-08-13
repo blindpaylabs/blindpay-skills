@@ -8,17 +8,27 @@ A transfer quote locks in the details of a stablecoin move before you execute it
 
 **Warning:**
 
-Transfers are in beta. Only same-token, same-network transfers are supported: `customer_token` must match `sender_token`, and `customer_network` must match the source wallet's own network. There is no cross-chain bridging and no token conversion.
+Transfers are in beta. `customer_token` must always match `sender_token`, there is no token conversion. `customer_network` must match the source wallet's own network, except when both tokens are `USDC`: a USDC transfer can additionally cross chains using [Circle CCTP v2](#cross-chain-usdc-transfers-circle-cctp-v2).
 
 ## How it works
 
 - **Source**: a managed wallet (`wallet_id`, `bl_...`) that holds the stablecoin balance. This is the only supported source, unlike payouts, which can also draw from an external blockchain wallet.
-- **Destination**: any blockchain address on the same network, `customer_wallet_address`. It does not need to belong to a BlindPay customer or wallet, it can be any address the recipient controls.
+- **Destination**: any blockchain address, `customer_wallet_address`, normally on the same network as the source wallet; a USDC transfer can target a different [CCTP v2 network](#cross-chain-usdc-transfers-circle-cctp-v2) instead. It does not need to belong to a BlindPay customer or wallet, it can be any address the recipient controls.
 - **Expiry is very short**. A transfer quote is meant to be executed immediately after creation, not held for later use. Read `expires_at` from the response rather than assuming a fixed window, and call [create a transfer](transfers.md) right after creating the quote.
 
 **Note:**
 
 `expires_at` is returned in epoch milliseconds.
+
+## Cross-chain USDC transfers (Circle CCTP v2)
+
+When both `sender_token` and `customer_token` are `USDC`, `customer_network` can be a different network than the source wallet's. BlindPay bridges the move using [Circle's Cross-Chain Transfer Protocol v2](https://developers.circle.com/cctp): USDC is burned on the source chain and an equivalent amount is minted on the destination chain once Circle attests the burn.
+
+Supported networks are Ethereum, Polygon, Base, and Arbitrum on a production instance; on a development instance, the matching testnets (Ethereum Sepolia, Polygon Amoy, Base Sepolia, Arbitrum Sepolia), using real testnet USDC rather than USDB, since CCTP can only move native USDC. Both the source and destination network must be on the same side of that mainnet/testnet boundary. Requesting a token other than USDC across networks returns `cross_chain_transfers_only_support_usdc`; requesting a network pair CCTP v2 does not support returns `cctp_route_not_supported`.
+
+The quote itself is unaffected by the bridge: amounts stay 1:1 and BlindPay adds no fee on top, exactly like a same-network transfer. Circle's protocol deducts its own small fee (typically a fraction of a cent up to a few cents, a few basis points of the amount) from the amount minted on the destination chain; this is not reflected in `receiver_amount` or any other quote field. Cross-chain transfers typically settle in 8 to 20 seconds; transfers sourced from Polygon settle in around 8 seconds either way.
+
+Solana, Stellar, and Tron are not part of cross-chain transfers yet; same-network moves on those chains are unaffected.
 
 ## Prerequisites
 
@@ -39,7 +49,7 @@ You also need a [customer](../kb/kyc.md) with `kyc_status: "approved"` and a [ma
 | `request_amount` | integer | yes | Amount in minor units, no floats. `$100.00` sends as `10000`. Minimum is `1`. |
 | `sender_token` | enum | yes | `USDC`, `USDT`, or `USDB`. Must be a token allowed on the source wallet's network. |
 | `customer_token` | enum | yes | Must equal `sender_token`. |
-| `customer_network` | enum | yes | Must equal the source wallet's own network. |
+| `customer_network` | enum | yes | Must equal the source wallet's own network, unless `sender_token` and `customer_token` are both `USDC` and the pair is a [supported CCTP v2 route](#cross-chain-usdc-transfers-circle-cctp-v2). |
 | `customer_wallet_address` | string | yes | The destination blockchain address, 32 to 64 characters, validated for the target network. Can be another wallet you created or any external address. |
 | `cover_fees` | boolean | yes | Accepted for API consistency with payin and payout quotes, but fee math is not yet active for transfers: `sender_amount` and `receiver_amount` are always equal to `request_amount`. |
 | `partner_fee_id` | string (`pf_...`) | no | Accepted, but partner fee amounts are not yet computed for transfers. |
@@ -115,7 +125,7 @@ const quote = await response.json()
 | --- | --- | --- |
 | `id` | string (`qu_...`) | Pass this as `transfer_quote_id` when you create the transfer. |
 | `expires_at` | number | Epoch milliseconds. Execute the transfer before this passes. |
-| `commercial_quotation` | number | Rate preview. Currently fixed at `100` for transfers since there is no FX conversion on a same-token move. |
+| `commercial_quotation` | number | Rate preview. Currently fixed at `100` for transfers since there is no FX conversion, even for a cross-chain USDC move. |
 | `blindpay_quotation` | number | Same as `commercial_quotation` for transfers today. |
 | `receiver_amount` | number | Equal to `request_amount`. |
 | `sender_amount` | number | Equal to `request_amount`. |
@@ -128,11 +138,11 @@ The `qu_` prefix is shared across payin quotes, payout quotes, and transfer quot
 
 ## Validation order
 
-The API checks, in this order: the caller has permission to create transactions, the wallet exists and belongs to your instance, the token and network are allowed for your instance type, USDT is only used on Polygon, the source wallet's network matches `customer_network`, `sender_token` matches `customer_token`, and the receiving customer's KYC is approved. The first failing check is the one returned.
+The API checks, in this order: the caller has permission to create transactions, the wallet exists and belongs to your instance. If `customer_network` differs from the source wallet's network, the API requires both `sender_token` and `customer_token` to be `USDC` (`cross_chain_transfers_only_support_usdc` otherwise) and the network pair to be a [supported CCTP v2 route](#cross-chain-usdc-transfers-circle-cctp-v2) (`cctp_route_not_supported` otherwise). If `customer_network` matches the source wallet's network, the API instead checks that the token and network are allowed for your instance type, that USDT is only used on Polygon, and that `sender_token` matches `customer_token`. Either path finishes with a check that the receiving customer's KYC is approved. The first failing check is the one returned.
 
 ## Testing
 
-There is no dedicated test-amount sentinel for transfer quotes or transfers (unlike payins and payouts, which force outcomes at `$666.00` and `$777.00`). On development instances, transfer quotes go through the same token and network rules as production, restricted to the development tokens and testnets described in [supported chains](../kb/supported-chains.md).
+There is no dedicated test-amount sentinel for transfer quotes or transfers (unlike payins and payouts, which force outcomes at `$666.00` and `$777.00`). On development instances, transfer quotes go through the same token and network rules as production, restricted to the development tokens and testnets described in [supported chains](../kb/supported-chains.md). Cross-chain USDC quotes are the exception: on a development instance they use real testnet USDC, not USDB, on the CCTP v2 testnets (Ethereum Sepolia, Polygon Amoy, Base Sepolia, Arbitrum Sepolia), since Circle's protocol can only move native USDC.
 
 ## Related
 

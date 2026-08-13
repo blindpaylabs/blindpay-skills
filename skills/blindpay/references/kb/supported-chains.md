@@ -24,7 +24,7 @@ Stellar, Solana, and Tron do not have a real numeric chain ID; the API accepts t
 
 USDB, BlindPay's test stablecoin, is available only on development instances and only on the six testnets above (`sepolia`, `base_sepolia`, `arbitrum_sepolia`, `polygon_amoy`, `stellar_testnet`, `solana_devnet`). It has no mainnet deployment on any chain. Mint it from the dashboard (EVM) or via the mint endpoints (Stellar, Solana). See [Mint USDB](../wallets/mint-usdb.md).
 
-A production instance can only use `USDC` or `USDT` on a mainnet network. A development instance can only use `USDB` on a testnet network. Sending a mismatched combination (for example `USDC` on `sepolia`, or `USDB` on `polygon`) is rejected.
+A production instance can only use `USDC` or `USDT` on a mainnet network. A development instance can only use `USDB` on a testnet network. Sending a mismatched combination (for example `USDC` on `sepolia`, or `USDB` on `polygon`) is rejected. The one exception is a cross-chain USDC transfer (see below): on a development instance it uses real testnet USDC instead of USDB, since [Circle CCTP v2](../wallets/transfer-quotes.md#cross-chain-usdc-transfers-circle-cctp-v2) can only move native USDC.
 
 ## Support by feature
 
@@ -36,7 +36,7 @@ A production instance can only use `USDC` or `USDT` on a mainnet network. A deve
 | Payouts (off-ramp source) | Ethereum, Polygon, Base, Arbitrum, Stellar, Solana, Tron | USDC, USDT (network-dependent; USDC not on Tron; USDT not on Base/Arbitrum/Stellar) | |
 | Managed wallets (beta) | Ethereum, Polygon, Base, Arbitrum, Solana | USDC, USDT (USDB on testnet) | |
 | External blockchain wallets | Ethereum, Polygon, Base, Arbitrum, Stellar, Solana, Tron | USDC, USDT (network-dependent; USDC not on Tron; USDT not on Base/Arbitrum/Stellar) | Store an address you already control; see [Managed wallet](../wallets/store.md) |
-| Transfers (beta) | Same token, same network only | USDC, USDT (USDT restricted to Polygon) | No bridging or token conversion |
+| Transfers (beta) | Same network, except USDC which can also cross Ethereum, Polygon, Base, Arbitrum via Circle CCTP v2 | USDC, USDT (USDT restricted to Polygon) | No token conversion |
 
 **Note:**
 
