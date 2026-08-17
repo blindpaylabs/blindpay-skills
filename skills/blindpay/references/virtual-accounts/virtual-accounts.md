@@ -8,7 +8,7 @@ Your customer gets a real US bank account in their own name, with its own routin
 
 **Note:**
 
-Transaction fees for each deposit are charged on your invoice at the end of the billing cycle.
+How BlindPay fees are charged depends on the deposit amount: deposits below $100.00 accrue the fee to your invoice at the end of the billing cycle (`billing_fee_amount` on the payin), while deposits of $100.00 or more are charged at the time of the transaction, deducted from the amount delivered on-chain (`transaction_fee_amount`). See [Fees on deposits](#fees-on-deposits).
 
 ## How it works
 
@@ -25,6 +25,19 @@ Each virtual account belongs to one customer and settles to one blockchain walle
 **Note:**
 
 Named payouts: when a virtual account is issued to an end user, all payouts originating from that account are sent under the end user's name rather than a pooled or omnibus account name. This ensures the recipient sees the actual payer on incoming transfers and aligns with originator-information requirements for payment-rail compliance. These accounts can also send and collect third-party payments.
+
+### Fees on deposits
+
+Every deposit is processed regardless of size, including $0.01 account-verification micro-deposits, and always delivers at least $0.01 of stablecoin to the linked wallet. Where the BlindPay fee lands depends on the deposit amount:
+
+| Deposit amount | BlindPay fee | Field on the payin |
+| --- | --- | --- |
+| Below $100.00 | Accrued to your invoice, charged at the end of the billing cycle | `billing_fee_amount` |
+| $100.00 or more | Charged at the time of the transaction, deducted from the delivered amount | `transaction_fee_amount` |
+
+Instances configured for end-of-month billing accrue the fee to `billing_fee_amount` for every deposit, regardless of amount.
+
+If a [partner fee](../essentials/partner-fees.md) applies to the account, it is collected from what remains after any transaction-time deduction, capped so the deposit always delivers at least $0.01. On small deposits this can mean partial collection (for example, a $5.00 fee on a $5.00 deposit collects $4.99) or none at all on micro-deposits.
 
 ### Approval process
 
@@ -56,7 +69,7 @@ A customer can't have two non-deleted virtual accounts of the same type unless t
 
 **Can a virtual account receive international payments?** Yes. US virtual accounts accept ACH, wire, and SWIFT transfers from US and foreign senders, depending on the account type.
 
-**How much does a stablecoin virtual account cost?** US virtual accounts cost $1.50 per month per account. Deposits generate payins, and transaction fees are charged on your monthly invoice.
+**How much does a stablecoin virtual account cost?** US virtual accounts cost $1.50 per month per account. Deposits generate payins; BlindPay fees on deposits below $100.00 are charged on your monthly invoice, and deposits of $100.00 or more are charged at the time of the transaction.
 
 ## Next
 

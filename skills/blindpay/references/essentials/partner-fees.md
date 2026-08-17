@@ -50,6 +50,8 @@ curl --request POST \
 
 Save the `id` from the response: this is your partner fee ID (`pf_...`). You can also manage fee configurations from the [BlindPay dashboard](https://app.blindpay.com), under the instance's Partner Fees tab.
 
+To make a fee the default for all [virtual account](../virtual-accounts/virtual-accounts.md) deposits, set `virtual_account_set: true` on creation (only one active fee per instance can hold the flag). See [Virtual accounts](#virtual-accounts) below for how defaults and per-account fees interact.
+
 ### Pass it in your quote requests
 
 Reference the `partner_fee_id` in a payin quote, payout quote, or transfer quote to apply that fee to the transaction.
@@ -96,6 +98,32 @@ const data = await response.json()
 
 **Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
 
+## Virtual accounts
+
+Deposits into a [virtual account](../virtual-accounts/virtual-accounts.md) create payins automatically, with no quote request where you could pass a `partner_fee_id`. Instead, the fee is configured ahead of time, at two levels:
+
+1. **Instance-wide default.** Create a fee configuration with `virtual_account_set: true` (or toggle it in the dashboard's Partner Fees tab). It applies to every virtual account deposit on the instance. Only one active configuration can be the default.
+2. **Per virtual account.** Pass a `partner_fee_id` when [creating a virtual account](../virtual-accounts/virtual-accounts-create.md), or set it later with the update endpoint. A fee pinned to an account **overrides the instance-wide default** for that account's deposits. Update with `partner_fee_id: null` to clear the pin and fall back to the default.
+
+```bash [cURL]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/customers/re_000000000000/virtual-accounts \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "banking_partner": "cfsb",
+    "token": "USDC",
+    "blockchain_wallet_id": "bw_000000000000",
+    "partner_fee_id": "pf_000000000000"
+  }'
+```
+
+Deleting a fee configuration automatically unpins it from any virtual accounts referencing it; those accounts fall back to the instance-wide default.
+
+**Note:**
+
+Every virtual account deposit always delivers at least $0.01 on-chain. The partner fee is collected from what remains after any transaction-time BlindPay fee, so on small deposits collection can be partial (a $5.00 fee on a $5.00 deposit collects $4.99) or zero on micro-deposits. See [fees on deposits](../virtual-accounts/virtual-accounts.md#fees-on-deposits).
+
 ## Quote response fields
 
 Each payin quote, payout quote, and transfer quote response includes:
@@ -137,3 +165,4 @@ Subscribe to `payin.partnerFee` and `payout.partnerFee` to track fee collection 
 - [Fiat receive](../payins/payins.md): payin quotes that accept `partner_fee_id`
 - [Fiat send](../payouts/payouts.md): payout quotes that accept `partner_fee_id`
 - [Stablecoin send](../wallets/send.md): transfer quotes that accept `partner_fee_id`
+- [Virtual accounts](../virtual-accounts/virtual-accounts.md): automated deposits with default or per-account partner fees

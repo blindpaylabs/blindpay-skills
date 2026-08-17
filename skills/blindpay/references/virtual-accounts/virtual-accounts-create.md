@@ -85,7 +85,8 @@ curl --request POST \
   --data '{
   "banking_partner": "cfsb",
   "token": "USDC",
-  "blockchain_wallet_id": "bw_000000000000"
+  "blockchain_wallet_id": "bw_000000000000",
+  "partner_fee_id": "pf_000000000000"
 }'
 ```
 
@@ -110,10 +111,11 @@ curl --request POST \
 | `blockchain_wallet_id` | string (`bw_...`) | Yes | Must belong to the same customer. |
 | `sole_proprietor_doc_type` | `master_service_agreement`, `salary_slip`, `bank_statement` | Conditional | Required for individual customers on this banking partner. |
 | `sole_proprietor_doc_file` | URL string | Conditional | Required alongside `sole_proprietor_doc_type`. |
+| `partner_fee_id` | string (`pf_...`) | No | Pins a [partner fee](../essentials/partner-fees.md) to this account's automated deposits, overriding the instance-wide virtual accounts default fee. Omit to use the default. |
 
-The response includes `id` (`va_...`), `banking_partner`, `kyc_status`, `token`, `blockchain_wallet_id`, and a `us` object with `ach`, `wire`, and `rtp` sub-objects (each `{routing_number, account_number}`), plus SWIFT and receiving-bank details once the account is `approved`. Before approval, rail numbers are empty.
+The response includes `id` (`va_...`), `banking_partner`, `kyc_status`, `token`, `blockchain_wallet_id`, `partner_fee_id`, and a `us` object with `ach`, `wire`, and `rtp` sub-objects (each `{routing_number, account_number}`), plus SWIFT and receiving-bank details once the account is `approved`. Before approval, rail numbers are empty.
 
-You can update `token` and `blockchain_wallet_id` on an existing virtual account; `banking_partner` cannot be changed after creation.
+You can update `token`, `blockchain_wallet_id`, and `partner_fee_id` on an existing virtual account (`partner_fee_id: null` clears the pin back to the instance default); `banking_partner` cannot be changed after creation.
 
 ## Webhooks
 
