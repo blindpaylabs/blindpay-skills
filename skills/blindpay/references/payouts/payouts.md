@@ -247,11 +247,14 @@ Configure a webhook endpoint once per instance. See [Webhooks](../essentials/web
 | `payout.complete` | A payout reaches `completed`, `failed`, or `refunded`. |
 | `payout.partnerFee` | A payout completes and a partner fee is owed. See [Partner fees](../essentials/partner-fees.md). |
 
+A payout can also execute a registered bill instead of a bank account: its `payable_id` is set, the bank fields are null, and the [payable](https://blindpay.com/docs/payables) emits its own `payable.*` events alongside these. Correlate the two through `payable_id`/`payout_id` and never count both completes as two payments.
+
 ## Related
 
 **Abstracted flavor (bank-rails framing, fiat-first API surface)**
 
 - [Payout quotes](payout-quotes.md): lock the exchange rate and fee split before executing
+- [Payables](https://blindpay.com/docs/payables): register a bill (boleto, arrecadação, PIX code) and pay it through this same flow
 - [Bank accounts](bank-accounts.md): add and manage recipient bank accounts
 - [Payout with EVM](payout-evm.md), [Stellar](payout-stellar.md), and [Solana](payout-solana.md): on-chain authorization mechanics for external wallets
 - [Mint USDB](../wallets/mint-usdb.md): fund test wallets on development instances

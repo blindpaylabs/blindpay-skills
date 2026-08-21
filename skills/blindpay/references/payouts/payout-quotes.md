@@ -103,6 +103,8 @@ You also need a [customer](../getting-started/overview.md) who has completed KYC
 
 Check the required fields in the [BlindPay API Docs](https://api.blindpay.com/reference#tag/quotes/POST/v1/instances/{instance_id}/quotes){target="_blank"}.
 
+The quote accepts exactly one destination: `bank_account_id` (shown below) or `payable_id` to pay a registered bill. See [Payables](https://blindpay.com/docs/payables#how-to-pay-one) for that variant, where the amount comes from the bill itself.
+
 **Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID, `re_000000000000` with your customer ID, `ba_000000000000` with your bank account ID.
 
 **Abstracted flavor (bank-rails framing, fiat-first API surface)**
