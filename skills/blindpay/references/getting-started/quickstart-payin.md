@@ -153,6 +153,10 @@ In production use `USDC` or `USDT`.
 
 Save the `id` from the response: this is your payin quote ID (`pq_...`). You have 5 minutes to create the payin before the quote expires.
 
+**Note:**
+
+This example uses the default manual bank transfer. If the customer connected a bank account through [Plaid](../payouts/bank-accounts.md#connect-with-plaid), pass its id as `funding_bank_account_id` instead and BlindPay pulls the funds automatically; see [Payins](../payins/payins.md#pull-funding-from-a-plaid-connected-account).
+
 ### Create the payin
 
 Create the payin from the quote ID. This is what generates the bank details your end user pays into.

@@ -256,6 +256,26 @@ Some payment methods require payer identity fields so BlindPay can match and scr
 | `transfers` | `transfers_allowed_tax_id` | CUIT/CUIL tax id, required for `transfers` |
 | `pse` | `pse_full_name`, `pse_document_type`, `pse_document_number`, `pse_email`, `pse_phone`, `pse_bank_code` | Full payer details, required for `pse` |
 
+## funding_bank_account_id (ach pull)
+
+For `payment_method: "ach"`, you can optionally pass `funding_bank_account_id` (a `ba_...` id) to have BlindPay pull the funds from a bank account the customer already connected through [Plaid](../payouts/bank-accounts.md#connect-with-plaid), instead of the payer sending a manual bank transfer. The account must belong to the same customer and be Plaid-connected (`plaid_connected_at` set); otherwise the quote is rejected with 400 `funding_account_not_plaid_connected`. See [Payins](payins.md#pull-funding-from-a-plaid-connected-account) for the full pull flow.
+
+```bash [🇺🇸 ACH pull]
+curl https://api.blindpay.com/v1/instances/in_000000000000/payin-quotes \
+  --request POST \
+  --header 'Content-Type: application/json' \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --data '{
+  "blockchain_wallet_id": "bw_000000000000",
+  "currency_type": "sender",
+  "cover_fees": true,
+  "request_amount": 10000,
+  "payment_method": "ach",
+  "token": "USDB",
+  "funding_bank_account_id": "ba_000000000000"
+}'
+```
+
 ## Response
 
 | Field | Type | Notes |

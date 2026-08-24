@@ -208,6 +208,32 @@ BlindPay detects the destination's network from the wallet record itself, so the
 
 Stellar mainnet deliveries originate from BlindPay's treasury wallet: `GCOSSQDM2SWMHRP7CDBOLL2V45NHCRLUWUCEHPPBA2ABCOOLPOLZKIHE`. This is the address that sends stablecoins to your blockchain wallet once the fiat payment is confirmed, and it is useful for reconciling incoming transactions on an explorer.
 
+## Pull funding from a Plaid-connected account
+
+For `ach` payins, instead of the payer sending a manual bank transfer, BlindPay can pull the funds directly from a bank account the customer connected through [Plaid](../payouts/bank-accounts.md#connect-with-plaid). Set `funding_bank_account_id` (a `ba_...` id) on the payin quote to a Plaid-connected account belonging to the same customer; the quote rejects any other bank account with 400 `funding_account_not_plaid_connected`.
+
+```bash [cURL]
+curl https://api.blindpay.com/v1/instances/in_000000000000/payin-quotes \
+  --request POST \
+  --header 'Content-Type: application/json' \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --data '{
+  "blockchain_wallet_id": "bw_000000000000",
+  "currency_type": "sender",
+  "cover_fees": true,
+  "request_amount": 10000,
+  "payment_method": "ach",
+  "token": "USDB",
+  "funding_bank_account_id": "ba_000000000000"
+}'
+```
+
+Creating the payin from that quote triggers the pull automatically; there is no `memo_code` or `blindpay_bank_details` for the payer to act on, and no manual transfer for BlindPay to wait for. If the pull cannot be initiated, the payin fails immediately with `PAYINS_FUNDING_PULL_FAILED` instead of sitting in `processing`.
+
+**Note:**
+
+Omit `funding_bank_account_id` to keep the default manual bank transfer flow described above.
+
 ## Monitoring window
 
 **Abstracted flavor (bank-rails framing, fiat-first API surface)**

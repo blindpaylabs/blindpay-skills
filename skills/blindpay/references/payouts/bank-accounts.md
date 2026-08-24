@@ -243,6 +243,35 @@ curl --request POST \
 
 Save the bank account ID (`ba_...`) for use in payout quotes.
 
+## Connect with Plaid
+
+**Note:**
+
+This feature is gated by `subscription_features.plaid` on the instance. Contact BlindPay to enable it. Calling the endpoint below without it enabled returns a 400 `plaid_not_supported` error.
+
+Instead of entering ACH details manually, a customer can connect their bank account through Plaid. BlindPay reads the verified routing and account numbers directly from Plaid, so there's no manual entry and no micro-deposit wait. The resulting bank account is `type: "ach"`, carries the timestamp `plaid_connected_at`, and can fund an ACH payin by pull instead of a manual bank transfer; see [Payins](../payins/payins.md#pull-funding-from-a-plaid-connected-account).
+
+There is a single endpoint. It returns a `hosted_link_url`; send the customer there and BlindPay does the rest.
+
+**Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID, `re_000000000000` with your customer ID.
+
+```bash [Create link]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/customers/re_000000000000/bank-accounts/plaid \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json'
+```
+
+The call returns `{ "link_token": "...", "expiration": "...", "hosted_link_url": "..." }`. Open `hosted_link_url` in a browser tab or an external webview - Plaid Hosted Link cannot be embedded in an iframe.
+
+When the customer finishes, Plaid notifies BlindPay and the bank account is created automatically, one per account the customer selected. All the identity fields on it (beneficiary name, address, tax id) come from the customer record, never from the bank connection, so the account is always first party. Listen to the `bankAccount.new` webhook, or poll [List bank accounts](https://blindpay.com/docs/api-reference/bank-accounts/list-bank-accounts), to know when it is available.
+
+The same connection is never turned into two bank accounts, even if Plaid redelivers the notification.
+
+**Note:**
+
+BlindPay never returns or stores the Plaid access token in plaintext anywhere reachable from the API, logs, or webhook payloads.
+
 ## International SWIFT rules
 
 International SWIFT accounts have extra country-conditional required fields.
