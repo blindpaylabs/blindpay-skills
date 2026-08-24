@@ -264,7 +264,7 @@ curl --request POST \
 
 The call returns `{ "link_token": "...", "expiration": "...", "hosted_link_url": "..." }`. Open `hosted_link_url` in a browser tab or an external webview - Plaid Hosted Link cannot be embedded in an iframe.
 
-When the customer finishes, Plaid notifies BlindPay and the bank account is created automatically, one per account the customer selected. All the identity fields on it (beneficiary name, address, tax id) come from the customer record, never from the bank connection, so the account is always first party. Listen to the `bankAccount.new` webhook, or poll [List bank accounts](https://blindpay.com/docs/api-reference/bank-accounts/list-bank-accounts), to know when it is available.
+When the customer finishes, Plaid notifies BlindPay and the bank account is created automatically, one per account the customer selected. All the identity fields on it (beneficiary name, address, tax id) come from the customer record, never from the bank connection, so the account is always first party. Listen to the `bankAccount.new` webhook, or poll [List bank accounts](https://api.blindpay.com/reference#tag/bank-accounts/GET/v1/instances/{instance_id}/customers/{customer_id}/bank-accounts){target="_blank"}, to know when it is available.
 
 The same connection is never turned into two bank accounts, even if Plaid redelivers the notification.
 
