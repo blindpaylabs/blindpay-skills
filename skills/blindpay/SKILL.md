@@ -231,6 +231,7 @@ Create a customer with first name `Fail` to simulate a KYC rejection. Mint USDB 
 - [On-hold transactions](references/kb/on-hold-transactions.md) - Transactions flagged as suspicious by BlindPay's monitoring system, held pending compliance review or a Request for Information.
 - [Payment methods](references/kb/payment-methods.md) - Every bank transfer rail BlindPay supports, by country and currency: ACH, wire, RTP, SWIFT, Pix, SPEI, PSE, Transfers, and SEPA.
 - [Payout descriptor](references/kb/payout-descriptor.md) - How the sender's name appears on a recipient's bank statement varies by payment method and whether Named Account is enabled.
+- [POBO and COBO](references/kb/pobo-cobo.md) - How payment on behalf of and collection on behalf of work at BlindPay, what puts your customer's name on a Wire, and where the compliance line sits.
 - [Prohibited activities](references/kb/prohibited-activities.md) - High-risk and prohibited business activities at BlindPay, and the disclosure obligations required during onboarding and ongoing monitoring.
 - [Proof of address](references/kb/proof-of-address.md) - Accepted proof-of-address documents and submission requirements for business and individual verification.
 - [Rejection reasons](references/kb/rejection-reasons.md) - Reason codes and messages returned when an application or document is rejected during verification.

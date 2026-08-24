@@ -116,7 +116,6 @@ All payout responses and [webhooks](../essentials/webhooks.md) include `tracking
 - Delivery Slip
 - Customs Declaration
 - Bill of Lading
-- First Party
 - Others
 
 Document templates are available in the [SWIFT Deliverability](swift-deliverability.md) guide.
@@ -127,7 +126,7 @@ Document templates are available in the [SWIFT Deliverability](swift-deliverabil
 
 ## First Party Payouts
 
-If you are sending funds to your own bank account (the sender and the customer are the same person or entity), use `first_party` as the `transaction_document_type`. When `first_party` is selected, `transaction_document_id` and `transaction_document_file` are not required. This is common when consolidating funds across your own accounts internationally.
+If you are sending funds to your own bank account (the sender and the customer are the same person or entity), set the bank account's `recipient_relationship` to `first_party`. No compliance document is required, so `transaction_document_type`, `transaction_document_id` and `transaction_document_file` do not apply. The beneficiary name must match the customer. This is common when consolidating funds across your own accounts internationally.
 
 ## Related
 
