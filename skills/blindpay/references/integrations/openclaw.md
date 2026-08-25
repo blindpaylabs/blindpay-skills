@@ -47,7 +47,7 @@ openclaw mcp doctor blindpay --probe
 ## Add Agent Skills
 
 ```bash [Terminal]
-npx skills add blindpaylabs/blindpay-skills
+npx skills add blindpaylabs/skills
 ```
 
 ## Use it

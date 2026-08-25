@@ -35,7 +35,7 @@ Or add it manually to your project's `.mcp.json`:
 ## Add Agent Skills
 
 ```bash [Terminal]
-npx skills add blindpaylabs/blindpay-skills
+npx skills add blindpaylabs/skills
 ```
 
 ## Use it

@@ -30,7 +30,7 @@ Restart Cursor, then enable the `blindpay` server in **Settings → MCP**.
 ## Add Agent Skills
 
 ```bash [Terminal]
-npx skills add blindpaylabs/blindpay-skills
+npx skills add blindpaylabs/skills
 ```
 
 Skills teach the agent BlindPay's rails, corridors, fees, KYC/KYB flows, and API patterns so it writes correct integrations.

@@ -48,7 +48,7 @@ For Claude Code or another JSON-configured MCP host, add it directly to `.mcp.js
 A packaged knowledge layer that teaches the agent BlindPay's rails, corridors, fees, and API patterns, so generated integrations are correct on the first pass.
 
 ```bash [Terminal]
-npx skills add blindpaylabs/blindpay-skills
+npx skills add blindpaylabs/skills
 ```
 
 ### REST API

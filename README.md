@@ -26,7 +26,7 @@ These skills provide AI assistants (Cursor, Claude Code, Codex, etc.) with domai
 Run the following command in your terminal:
 
 ```bash
-npx skills add blindpaylabs/blindpay-skills
+npx skills add blindpaylabs/skills
 ```
 
 ### Cursor
@@ -34,7 +34,7 @@ npx skills add blindpaylabs/blindpay-skills
 Run the following command in your terminal:
 
 ```bash
-npx skills add blindpaylabs/blindpay-skills
+npx skills add blindpaylabs/skills
 ```
 
 ### Codex
@@ -42,7 +42,7 @@ npx skills add blindpaylabs/blindpay-skills
 Run the following command in your terminal:
 
 ```bash
-npx skills add blindpaylabs/blindpay-skills
+npx skills add blindpaylabs/skills
 ```
 
 ## Example Prompts
@@ -71,7 +71,7 @@ Once installed, skills are automatically activated when relevant tasks are detec
 ## Support
 
 - Email: [eric@blindpay.com](mailto:eric@blindpay.com)
-- Issues: [GitHub Issues](https://github.com/blindpaylabs/blindpay-skills/issues)
+- Issues: [GitHub Issues](https://github.com/blindpaylabs/skills/issues)
 
 ## License
 
