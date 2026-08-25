@@ -8,16 +8,16 @@ BlindPay supports bank transfers over local rails in the US, Brazil, Mexico, Col
 
 | Payment method | Country/Region | Currency | Direction |
 | --- | --- | --- | --- |
-| International SWIFT | Global | USD | Send |
-| ACH | United States | USD | Receive + send |
-| Domestic Wire | United States | USD | Receive + send |
-| RTP | United States | USD | Send |
-| Pix | Brazil | BRL | Receive + send |
-| SPEI | Mexico | MXN | Receive + send |
-| PSE | Colombia | COP | Receive |
-| ACH Colombia | Colombia | COP | Send |
-| Transfers 3.0 | Argentina | ARS | Receive + send |
-| SEPA | Europe (SEPA zone) | EUR | Send |
+| International SWIFT | 🌎 Global | USD | Receive + send |
+| ACH | 🇺🇸 United States | USD | Receive + send |
+| Domestic Wire | 🇺🇸 United States | USD | Receive + send |
+| RTP | 🇺🇸 United States | USD | Receive + send |
+| Pix | 🇧🇷 Brazil | BRL | Receive + send |
+| SPEI | 🇲🇽 Mexico | MXN | Receive + send |
+| PSE | 🇨🇴 Colombia | COP | Receive |
+| ACH Colombia | 🇨🇴 Colombia | COP | Send |
+| Transfers 3.0 | 🇦🇷 Argentina | ARS | Receive + send |
+| SEPA | 🇪🇺 Europe (SEPA zone) | EUR | Send |
 
 **Note:**
 

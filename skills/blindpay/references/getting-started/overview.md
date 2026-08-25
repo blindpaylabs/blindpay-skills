@@ -19,7 +19,7 @@ BlindPay is non-custodial under the hood: funds always move through a customer t
 | Capability | Description |
 | --- | --- |
 | Virtual accounts | A dedicated US bank account issued in each customer's name, with its own routing and account number |
-| Receive (payins) | Accept ACH, wire, Pix, SPEI, Transfers, or PSE deposits; every incoming payment is tracked as a payin |
+| Receive (payins) | Accept ACH, wire, RTP, SWIFT, Pix, SPEI, Transfers, or PSE deposits; every incoming payment is tracked as a payin |
 | Send (payouts) | Pay out to any bank account: ACH, wire, SWIFT, RTP, Pix, SPEI, ACH COP, Transfers, or SEPA |
 | Webhooks | Real-time events for every deposit and payout state change |
 
@@ -31,7 +31,9 @@ BlindPay is non-custodial under the hood: funds always move through a customer t
 | ACH | USD | Send | ~2 business days |
 | Wire | USD | Receive | Up to 5 business days |
 | Wire | USD | Send | ~1 business day |
+| SWIFT (international) | USD | Receive | Up to 5 business days |
 | SWIFT (international) | USD | Send | ~5 business days |
+| RTP | USD | Receive | Instant |
 | RTP | USD | Send | Instant |
 | Pix | BRL | Receive + send | Instant (up to 5 min to confirm) |
 | SPEI | MXN | Receive + send | Instant (up to 10 min to confirm) |
