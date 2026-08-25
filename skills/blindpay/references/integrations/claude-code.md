@@ -12,7 +12,7 @@ Source: https://blindpay.com/docs/integrations/claude-code
 claude mcp add blindpay \
   --env BLINDPAY_API_KEY=your-api-key \
   --env BLINDPAY_INSTANCE_ID=your-instance-id \
-  -- npx -y @blindpaylabs/blindpay-mcp
+  -- npx -y @blindpay/mcp
 ```
 
 Or add it manually to your project's `.mcp.json`:
@@ -22,7 +22,7 @@ Or add it manually to your project's `.mcp.json`:
   "mcpServers": {
     "blindpay": {
       "command": "npx",
-      "args": ["-y", "@blindpaylabs/blindpay-mcp"],
+      "args": ["-y", "@blindpay/mcp"],
       "env": {
         "BLINDPAY_API_KEY": "your-api-key",
         "BLINDPAY_INSTANCE_ID": "your-instance-id"

@@ -16,14 +16,14 @@ The Model Context Protocol server exposes the BlindPay API as callable tools. An
 codex mcp add blindpay \
   --env BLINDPAY_API_KEY=YOUR_API_KEY \
   --env BLINDPAY_INSTANCE_ID=in_000000000000 \
-  -- npx -y @blindpaylabs/blindpay-mcp
+  -- npx -y @blindpay/mcp
 ```
 
 ```bash [Claude Code]
 claude mcp add blindpay \
   --env BLINDPAY_API_KEY=YOUR_API_KEY \
   --env BLINDPAY_INSTANCE_ID=in_000000000000 \
-  -- npx -y @blindpaylabs/blindpay-mcp
+  -- npx -y @blindpay/mcp
 ```
 
 For Claude Code or another JSON-configured MCP host, add it directly to `.mcp.json` in your project:
@@ -33,7 +33,7 @@ For Claude Code or another JSON-configured MCP host, add it directly to `.mcp.js
   "mcpServers": {
     "blindpay": {
       "command": "npx",
-      "args": ["-y", "@blindpaylabs/blindpay-mcp"],
+      "args": ["-y", "@blindpay/mcp"],
       "env": {
         "BLINDPAY_API_KEY": "YOUR_API_KEY",
         "BLINDPAY_INSTANCE_ID": "in_000000000000"

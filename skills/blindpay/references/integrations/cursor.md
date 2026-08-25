@@ -15,7 +15,7 @@ Create `.cursor/mcp.json` in your project (or add to the global config):
   "mcpServers": {
     "blindpay": {
       "command": "npx",
-      "args": ["-y", "@blindpaylabs/blindpay-mcp"],
+      "args": ["-y", "@blindpay/mcp"],
       "env": {
         "BLINDPAY_API_KEY": "your-api-key",
         "BLINDPAY_INSTANCE_ID": "your-instance-id"

@@ -14,7 +14,7 @@ Install BlindPay's MCP server through OpenClaw's MCP registry:
 openclaw mcp add blindpay \
   --command npx \
   --arg -y \
-  --arg @blindpaylabs/blindpay-mcp \
+  --arg @blindpay/mcp \
   --env BLINDPAY_API_KEY=your-api-key \
   --env BLINDPAY_INSTANCE_ID=your-instance-id
 ```
@@ -27,7 +27,7 @@ Or add it directly under `mcp.servers` in your OpenClaw config:
     "servers": {
       "blindpay": {
         "command": "npx",
-        "args": ["-y", "@blindpaylabs/blindpay-mcp"],
+        "args": ["-y", "@blindpay/mcp"],
         "env": {
           "BLINDPAY_API_KEY": "your-api-key",
           "BLINDPAY_INSTANCE_ID": "your-instance-id"

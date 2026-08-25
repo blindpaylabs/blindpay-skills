@@ -14,7 +14,7 @@ Add BlindPay under `mcp_servers` in `~/.hermes/config.yaml`:
 mcp_servers:
   blindpay:
     command: "npx"
-    args: ["-y", "@blindpaylabs/blindpay-mcp"]
+    args: ["-y", "@blindpay/mcp"]
     env:
       BLINDPAY_API_KEY: "your-api-key"
       BLINDPAY_INSTANCE_ID: "your-instance-id"

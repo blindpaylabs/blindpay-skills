@@ -12,7 +12,7 @@ Source: https://blindpay.com/docs/integrations/codex
 codex mcp add blindpay \
   --env BLINDPAY_API_KEY=your-api-key \
   --env BLINDPAY_INSTANCE_ID=your-instance-id \
-  -- npx -y @blindpaylabs/blindpay-mcp
+  -- npx -y @blindpay/mcp
 ```
 
 Run `codex mcp list` to verify that the `blindpay` server is configured. Codex CLI, the IDE extension, and the desktop app share this MCP configuration.
