@@ -20,7 +20,7 @@ Run `codex mcp list` to verify that the `blindpay` server is configured. Codex C
 ## Add Agent Skills
 
 ```bash [Terminal]
-npx skills add blindpaylabs/blindpay-skills
+npx skills add blindpaylabs/skills
 ```
 
 Skills teach Codex BlindPay's rails, corridors, fees, KYC/KYB flows, and API patterns so it can build correct integrations in your codebase.
