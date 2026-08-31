@@ -28,7 +28,7 @@ On a rejection, BlindPay returns feedback in `kyc_warnings` or `fraud_warnings`.
 
 ## Test token
 
-Development instances use **USDB**, a BlindPay-issued test stablecoin, in place of real USDC/USDT. You can mint unlimited USDB on EVM testnets, Stellar Testnet, and Solana Devnet; Solana Devnet has a REST endpoint that mints to any address, which makes it the easiest way to fund a managed wallet. See [Mint USDB](../wallets/mint-usdb.md) for every method and the full request bodies.
+Development instances use **USDB**, a BlindPay-issued test stablecoin, in place of real USDC/USDT. Fund a managed wallet by creating a [payin](../payins/payin-managed-wallet.md) targeting it: on a development instance the payin auto-completes about 30 seconds after creation and delivers USDB into the wallet.
 
 **Note:**
 
@@ -109,7 +109,7 @@ Strip any logic that relies on `666.00` or `777.00` to simulate outcomes. On pro
 
 ### Switch from USDB to USDC/USDT
 
-Update `token` in your quote and mint requests from `USDB` to `USDC` or `USDT`, and point `network` at a production chain (`base`, `polygon`, `arbitrum`, `ethereum`, `stellar`, `solana`) instead of its testnet equivalent.
+Update `token` in your quote requests from `USDB` to `USDC` or `USDT`, and point `network` at a production chain (`base`, `polygon`, `arbitrum`, `ethereum`, `stellar`, `solana`) instead of its testnet equivalent.
 
 ### Re-point webhooks
 

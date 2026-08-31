@@ -6,6 +6,14 @@ Source: https://blindpay.com/docs/build-with-ai
 
 BlindPay exposes its full payments API through three surfaces that drop into any AI coding agent or AI app builder: an **MCP server**, **Agent Skills**, and a **REST API**. Use them to create quotes, execute payments, manage customers, and configure webhooks directly from the terminal, your IDE, or a no-code builder.
 
+## Prebuilt prompts
+
+Curated prompts that walk an AI coding agent through a full quickstart, with the API gotchas already encoded. Copy one into your agent, or add it to your project rules or `CLAUDE.md`:
+
+<CLLMPrompt src="prompts/quickstart-payin-autonomous.md" displayText="Payin: builds everything, one handoff at the end." />
+
+<CLLMPrompt src="prompts/quickstart-payout-autonomous.md" displayText="Payout: builds everything, one handoff at the end." />
+
 ## The three surfaces
 
 ### MCP server

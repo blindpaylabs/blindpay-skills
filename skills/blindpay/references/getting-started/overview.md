@@ -138,7 +138,7 @@ A customer must exist and complete KYC before you can create either kind of wall
 | Solana | `solana` | `solana_devnet` | USDC, USDT |
 | Tron (beta) | `tron` | n/a | USDT only |
 
-On development instances, every chain above also accepts **USDB**: a BlindPay test ERC-20/asset used to simulate transactions without real funds. Mint it from the dashboard (EVM) or via the create-asset-trustline and mint endpoints (Stellar, Solana). See [Mint USDB](../wallets/mint-usdb.md) for the full minting steps.
+On development instances, every chain above also accepts **USDB**: a BlindPay test ERC-20/asset used to simulate transactions without real funds. Fund a wallet with it by creating a [payin](../payins/payins.md), which auto-completes on development instances.
 
 Authorization mechanics differ per network when moving stablecoins out of an external wallet:
 

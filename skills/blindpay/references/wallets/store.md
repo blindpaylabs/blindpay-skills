@@ -54,7 +54,6 @@ You only ever reference the wallet by its ID (`bl_...`) on payin quotes, or by i
 ## In this section
 
 - [Managed wallet](wallets.md): create a `bl_` wallet, check its balance, and receive stablecoins directly into it.
-- [Mint USDB](mint-usdb.md): fund a wallet with BlindPay's test stablecoin on development instances.
 
 Blockchain wallets (`bw_`) are documented under [Payins](../payins/blockchain-wallets.md), where they serve as the customer-controlled delivery target.
 

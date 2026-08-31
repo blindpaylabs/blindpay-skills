@@ -41,9 +41,9 @@ For quick testing before you have a real handler, point the endpoint at [webhook
 
 **Abstracted flavor (bank-rails framing, fiat-first API surface)**
 
-### Key events for fiat
+### Key events for the Abstracted flavor
 
-Working with the fiat flavor, you will listen most often to:
+Working with the Abstracted flavor, you will listen most often to:
 
 - `virtualAccount.complete`: the account is approved and ready to receive deposits
 - `payin.complete`: a deposit arrived and settled

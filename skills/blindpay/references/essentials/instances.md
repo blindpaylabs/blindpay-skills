@@ -32,7 +32,7 @@ All payouts and payins made on development instances skip the real fiat payment 
 | API keys | Supported | Supported |
 | Webhooks | Supported | Supported |
 
-On development instances, use USDB as the test stablecoin: a BlindPay-issued test token you can mint freely instead of sourcing real USDC or USDT. See [Sandbox vs. production](sandbox-vs-production.md) for the full testing workflow.
+On development instances, use USDB as the test stablecoin: a BlindPay-issued test token that stands in for real USDC or USDT. See [Sandbox vs. production](sandbox-vs-production.md) for the full testing workflow.
 
 ## Create an instance
 
