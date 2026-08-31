@@ -8,6 +8,10 @@ Source: https://blindpay.com/docs/quickstart-payout
 
 This quickstart walks through a payout: funds leave a BlindPay-managed wallet and USD lands in a recipient's bank account. You will accept the terms of service, create a customer, create and fund a managed wallet, add a bank account, quote the payout, and execute it. Because BlindPay custodies the funding wallet, there is no on-chain signing or token approval; every step is a REST call. On a development instance the payout completes automatically a few seconds after you execute it.
 
+<CLLMPrompt src="prompts/quickstart-payout.md" displayText="Guided: the agent walks you through each step." />
+
+<CLLMPrompt src="prompts/quickstart-payout-autonomous.md" displayText="Autonomous: builds everything, one handoff at the end." />
+
 ## Before you begin
 
 You need a BlindPay account and an API key for a development instance. See [Instances](../essentials/instances.md) and [API keys](../essentials/api-keys.md).
@@ -83,7 +87,7 @@ On development instances, KYC is approved automatically. In production, automate
 
 ### Create a managed wallet
 
-Every payout needs a funding source, the wallet the settlement stablecoins are pulled from. A [managed wallet](../wallets/wallets.md) is the simplest one: BlindPay generates the address and holds the keys, so executing the payout later needs no approval or signature. This example creates it on Solana Devnet, the development network with a REST endpoint for minting test funds.
+Every payout needs a funding source, the wallet the settlement stablecoins are pulled from. A [managed wallet](../wallets/wallets.md) is the simplest one: BlindPay generates the address and holds the keys, so executing the payout later needs no approval or signature. This example creates it on Solana Devnet, one of the development networks.
 
 **Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID, `re_000000000000` with your customer ID.
 
@@ -98,24 +102,40 @@ curl --request POST \
   }'
 ```
 
-Save the `id` (`bl_...`) and the `address` from the response. You need the address for the next step and for executing the payout.
+Save the `id` (`bl_...`) and the `address` from the response. The `id` targets the payin in the next step; the `address` executes the payout.
 
-### Fund the wallet with USDB
+### Fund the wallet with a payin
 
-Mint USDB, BlindPay's development-only test stablecoin, straight into the managed wallet. Pass the wallet's `address` and the amount of USDB to mint:
+A [payin](../payins/payins.md) funds the wallet: fiat comes in and BlindPay delivers USDB, the development-only test stablecoin, into it. Create a payin quote first, passing the wallet's `id`:
 
 ```bash [cURL]
 curl --request POST \
-  --url https://api.blindpay.com/v1/instances/in_000000000000/mint-usdb-solana \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/payin-quotes \
   --header 'Authorization: Bearer YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
-    "address": "YOUR_WALLET_ADDRESS",
-    "amount": "100"
+    "wallet_id": "bl_000000000000",
+    "currency_type": "sender",
+    "cover_fees": true,
+    "request_amount": 10000,
+    "payment_method": "ach",
+    "token": "USDB"
   }'
 ```
 
-The response returns `success: true` with the on-chain signature. The wallet now holds 100 USDB to pay out from.
+`request_amount` is an integer in minor units, so `10000` is $100.00. Save the quote ID (`pq_...`) and create the payin from it within 5 minutes:
+
+```bash [cURL]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/payins/evm \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "payin_quote_id": "pq_000000000000"
+  }'
+```
+
+On a development instance the payin completes automatically about 30 seconds after creation; no real fiat moves. The wallet then holds about 100 USDB to pay out from.
 
 ### Add a bank account
 
@@ -187,7 +207,7 @@ The endpoint is `/payouts/evm` regardless of the funding network; it handles man
 
 On a development instance, the payout completes automatically a few seconds after you execute it. Check for the `payout.complete` webhook to confirm. In production, settlement timing depends on the payout rail; see [cut-off times](../kb/cut-off-times.md).
 
-**Note:**
+**Success:**
 
 Done. To send another payment, create a new payout quote and execute it again; each quote is single-use.
 
@@ -203,6 +223,10 @@ Done. To send another payment, create a new payout quote and execute it again; e
 This quickstart walks through an off-ramp payout: pulling USDB from a managed wallet and delivering USD to a bank account. You will accept the terms of service, create a customer, create and fund a managed wallet, add a bank account, create a payout quote, and execute the payout. Every step is a REST call, no on-chain signing involved.
 
 If you want to fund the payout from a self-custodied wallet instead (with the on-chain authorization that entails), follow the [Payout with EVM](../payouts/payout-evm.md), [Stellar](../payouts/payout-stellar.md), or [Solana](../payouts/payout-solana.md) tutorials after this one.
+
+<CLLMPrompt src="prompts/quickstart-payout.md" displayText="Guided: the agent walks you through each step." />
+
+<CLLMPrompt src="prompts/quickstart-payout-autonomous.md" displayText="Autonomous: builds everything, one handoff at the end." />
 
 ## Before you begin
 
@@ -275,7 +299,7 @@ This is the full standard KYC payload (`kyc_type: "standard"`): identity documen
 
 ### Create a managed wallet
 
-The payout needs a funding source, the wallet the stablecoins are pulled from. A [managed wallet](../wallets/wallets.md) is the simplest one: BlindPay generates the address and holds the keys, so executing the payout later needs no approval or signature. This example creates it on Solana Devnet, the development network with a REST endpoint for minting test funds.
+The payout needs a funding source, the wallet the stablecoins are pulled from. A [managed wallet](../wallets/wallets.md) is the simplest one: BlindPay generates the address and holds the keys, so executing the payout later needs no approval or signature. This example creates it on Solana Devnet, one of the development networks.
 
 **Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID, `re_000000000000` with your customer ID.
 
@@ -290,24 +314,40 @@ curl --request POST \
   }'
 ```
 
-Save the `id` (`bl_...`) and the `address` from the response. You need the address for the next step and for executing the payout.
+Save the `id` (`bl_...`) and the `address` from the response. The `id` targets the payin in the next step; the `address` executes the payout.
 
-### Fund the wallet with USDB
+### Fund the wallet with a payin
 
-Mint USDB, BlindPay's development-only test stablecoin, straight into the managed wallet. Pass the wallet's `address` and the amount of USDB to mint:
+A [payin](../payins/payins.md) funds the wallet: fiat comes in and BlindPay delivers USDB, the development-only test stablecoin, into it. Create a payin quote first, passing the wallet's `id`:
 
 ```bash [cURL]
 curl --request POST \
-  --url https://api.blindpay.com/v1/instances/in_000000000000/mint-usdb-solana \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/payin-quotes \
   --header 'Authorization: Bearer YOUR_API_KEY' \
   --header 'Content-Type: application/json' \
   --data '{
-    "address": "YOUR_WALLET_ADDRESS",
-    "amount": "100"
+    "wallet_id": "bl_000000000000",
+    "currency_type": "sender",
+    "cover_fees": true,
+    "request_amount": 10000,
+    "payment_method": "ach",
+    "token": "USDB"
   }'
 ```
 
-The response returns `success: true` with the on-chain signature. The wallet now holds 100 USDB to pay out from. See [Mint USDB](../wallets/mint-usdb.md) for minting on other networks.
+`request_amount` is an integer in minor units, so `10000` is $100.00. Save the quote ID (`pq_...`) and create the payin from it within 5 minutes:
+
+```bash [cURL]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/payins/evm \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "payin_quote_id": "pq_000000000000"
+  }'
+```
+
+On a development instance the payin completes automatically about 30 seconds after creation; no real fiat moves. The wallet then holds about 100 USDB to pay out from.
 
 ### Add a bank account
 
@@ -371,7 +411,7 @@ curl --request POST \
 
 The response returns the payout with `status: "processing"`. On a development instance, the payout completes automatically a few seconds after creation, no manual settlement step needed. You will receive a `payout.complete` webhook once it does.
 
-**Note:**
+**Success:**
 
 Congratulations! You've completed your first off-ramp payout with BlindPay. To send another, create a new quote and execute again, each quote is single-use.
 

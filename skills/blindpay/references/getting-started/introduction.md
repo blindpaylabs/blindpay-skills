@@ -12,7 +12,7 @@ Under the hood, every payment settles through stablecoins. BlindPay is a non-cus
 
 The API is organized around four verbs that work the same way whether you think in fiat or in stablecoins.
 
-| Verb | Fiat | Stablecoin |
+| Verb | Abstracted | Advanced |
 | --- | --- | --- |
 | **Store** | N/A (value settles as stablecoin in the linked wallet) | Managed wallet (or external blockchain wallet) |
 | **Receive** | Bank transfer in (payin) | On-ramp: fiat in, stablecoin delivered to a wallet |
@@ -23,8 +23,8 @@ The API is organized around four verbs that work the same way whether you think 
 
 The docs are split into two flavors based on how you think about money movement. Both run on the same engine, same authentication, same instances, and same webhooks; pick the lens that matches your product.
 
-- **[Fiat](overview.md)** is for builders who think in bank rails: money in over ACH, wire, SWIFT, or Pix, and money out to a bank account. A virtual account is a customer's dedicated deposit account, payins are deposits, and payouts are bank transfers. Value settles as stablecoin in the linked wallet behind the scenes.
-- **[Stablecoin](overview.md)** is for crypto-native builders. It covers managed and external blockchain wallets, chains and tokens, on-chain authorization (ERC-20 approve, Stellar signing, Solana delegation), and cross-chain transfers.
+- **[Abstracted](https://blindpay.com/docs/overview?flavor=abstracted)** is for builders who think in familiar payment concepts: money in over ACH, wire, SWIFT, or Pix, and money out to a bank account. A virtual account is a customer's dedicated deposit account, payins are deposits, and payouts are bank transfers. Stablecoins settle in the linked wallet behind the scenes.
+- **[Advanced](https://blindpay.com/docs/overview?flavor=advanced)** exposes the full stablecoin and blockchain stack. It covers managed and external blockchain wallets, chains and tokens, on-chain authorization (ERC-20 approve, Stellar signing, Solana delegation), and cross-chain transfers.
 
 You can switch flavors at any time from the sidebar; nothing about your account or API key changes.
 
@@ -52,7 +52,7 @@ BlindPay is non-custodial: your funds remain under your control throughout the p
 
 ### Pick your flavor
 
-Read the [fiat](overview.md) or [stablecoin](overview.md) index to see which lens matches what you're building. Most teams only need one.
+Read the [Abstracted](https://blindpay.com/docs/overview?flavor=abstracted) or [Advanced](https://blindpay.com/docs/overview?flavor=advanced) index to see which lens matches what you're building. Most teams only need one.
 
 ### Create an instance
 
@@ -64,7 +64,7 @@ An [instance](../essentials/instances.md) is your sandboxed or production enviro
 
 ## Related
 
-- [Fiat](overview.md): bank rails, virtual accounts, payins and payouts
-- [Stablecoin](overview.md): wallets, chains, on-ramp and off-ramp
+- [Abstracted](https://blindpay.com/docs/overview?flavor=abstracted): bank rails, virtual accounts, payins and payouts
+- [Advanced](https://blindpay.com/docs/overview?flavor=advanced): wallets, chains, on-ramp and off-ramp
 - [Instances](../essentials/instances.md): sandbox vs production environments
 - [Build with AI](build-with-ai.md): use BlindPay from an AI coding assistant

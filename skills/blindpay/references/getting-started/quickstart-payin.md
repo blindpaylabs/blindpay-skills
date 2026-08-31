@@ -12,6 +12,10 @@ This guide walks through the minimum steps to receive a fiat payment: accept the
 
 This quickstart walks through an on-ramp payin: a sender pays fiat over bank rails and BlindPay delivers the equivalent stablecoins into a managed wallet. You will accept the terms of service, create a customer, create a managed wallet, quote the payin, and create it. Every step is a REST call, no on-chain signing involved. On a development instance the deposit settles automatically about 30 seconds after you create the payin.
 
+<CLLMPrompt src="prompts/quickstart-payin.md" displayText="Guided: the agent walks you through each step." />
+
+<CLLMPrompt src="prompts/quickstart-payin-autonomous.md" displayText="Autonomous: builds everything, one handoff at the end." />
+
 ## Before you begin
 
 You need a BlindPay account and an API key for a development instance. See [Instances](../essentials/instances.md) and [API keys](../essentials/api-keys.md).
@@ -218,7 +222,7 @@ curl --request GET \
 
 In production, BlindPay waits up to 5 business days for an ACH or wire deposit to arrive before cancelling the payin if nothing shows up.
 
-**Note:**
+**Success:**
 
 Done. To receive another payment, create a new payin quote and repeat the last step.
 

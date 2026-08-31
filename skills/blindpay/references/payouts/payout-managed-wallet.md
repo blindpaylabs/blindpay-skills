@@ -22,7 +22,7 @@ You also need:
 - A [bank account](bank-accounts.md) (`ba_...`) as the payout destination
 - A [managed wallet](../wallets/wallets.md) (`bl_...`) holding enough stablecoins to cover the payout
 
-On a development instance, the easiest way to fund the wallet is to create it on `solana_devnet` and [mint USDB](../wallets/mint-usdb.md#mint-on-solana) straight to its address.
+On a development instance, fund the wallet with a [payin](../payins/payin-managed-wallet.md): it auto-completes about 30 seconds after creation and delivers USDB straight into the wallet.
 
 ### Create a payout quote
 
@@ -68,7 +68,7 @@ The response returns the payout with `status: "processing"`. On a development in
 
 The endpoint is `/payouts/evm` regardless of the managed wallet's network; it handles managed wallets on every supported chain, including Solana.
 
-**Note:**
+**Success:**
 
 That's a complete payout. To send another, create a new quote and execute again; each quote is single-use.
 

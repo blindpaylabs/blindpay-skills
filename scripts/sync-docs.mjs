@@ -46,7 +46,7 @@ for (const g of groups)
 
 /* ------------------------------------------------------------- components -- */
 
-const ALERT_LABELS = { info: 'Note', tip: 'Tip', success: 'Note', warning: 'Warning', danger: 'Warning', error: 'Warning' }
+const ALERT_LABELS = { info: 'Note', tip: 'Tip', success: 'Success', warning: 'Warning', danger: 'Danger', error: 'Danger' }
 
 const FLAVOR_LABELS = {
   abstracted: 'Abstracted flavor (bank-rails framing, fiat-first API surface)',
@@ -63,7 +63,6 @@ const PREREQ_BASE = [
 ]
 const PREREQ_EXTRA = {
   tos: 'Accept the Terms of Service and get your `tos_id` (see essentials/terms-of-service.md)',
-  'mint-usdb': 'Mint USDB test tokens (see wallets/mint-usdb.md)',
 }
 
 function attrs(tag) {

@@ -21,7 +21,6 @@ The examples below use `stellar_testnet` and `USDB` since they're the developmen
 1. Create an account at https://app.blindpay.com/sign-up
 2. Create a development instance (see essentials/instances.md)
 3. Create your API key (see essentials/api-keys.md)
-4. Mint USDB test tokens (see wallets/mint-usdb.md)
 
 You also need a [customer](../essentials/customers.md) with `kyc_status: "approved"`, a [bank account](bank-accounts.md) (`ba_...`), and an unexpired [payout quote](payout-quotes.md) (`qu_...`) created with a Stellar `network`.
 
@@ -103,7 +102,7 @@ curl --request POST \
 }'
 ```
 
-**Note:**
+**Success:**
 
 That's a completed payout on Stellar. To send another, create a new quote and repeat the authorize, sign, and create steps, the quote and signed transaction are single-use.
 
@@ -111,5 +110,5 @@ That's a completed payout on Stellar. To send another, create a new quote and re
 
 - [Payouts](payouts.md): status lifecycle, cover_fees, testing sentinels, and webhooks
 - [Payout quotes](payout-quotes.md): full request and response fields
-- [Mint USDB](../wallets/mint-usdb.md): mint on Stellar Testnet, including the one-time trustline
+- [Payin with blockchain wallet](../payins/payin-blockchain-wallet.md): fund your test wallet on development instances
 - [Payout with managed wallet](payout-managed-wallet.md): the no-signing alternative (Stellar not yet supported for managed wallets)

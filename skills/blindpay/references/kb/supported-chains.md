@@ -22,7 +22,7 @@ There is no runtime endpoint that lists supported chains or tokens. This page is
 
 Stellar, Solana, and Tron do not have a real numeric chain ID; the API accepts the network name directly (`stellar`, `solana`, `tron`), not a chain ID. Tron has no testnet, so it cannot be exercised on a development instance.
 
-USDB, BlindPay's test stablecoin, is available only on development instances and only on the six testnets above (`sepolia`, `base_sepolia`, `arbitrum_sepolia`, `polygon_amoy`, `stellar_testnet`, `solana_devnet`). It has no mainnet deployment on any chain. Mint it from the dashboard (EVM) or via the mint endpoints (Stellar, Solana). See [Mint USDB](../wallets/mint-usdb.md).
+USDB, BlindPay's test stablecoin, is available only on development instances and only on the six testnets above (`sepolia`, `base_sepolia`, `arbitrum_sepolia`, `polygon_amoy`, `stellar_testnet`, `solana_devnet`). It has no mainnet deployment on any chain. Wallets receive it through [payins](../payins/payins.md), which auto-complete on development instances.
 
 A production instance can only use `USDC` or `USDT` on a mainnet network. A development instance can only use `USDB` on a testnet network. Sending a mismatched combination (for example `USDC` on `sepolia`, or `USDB` on `polygon`) is rejected. The one exception is a cross-chain USDC transfer (see below): on a development instance it uses real testnet USDC instead of USDB, since [Circle CCTP v2](../wallets/transfer-quotes.md#cross-chain-usdc-transfers-circle-cctp-v2) can only move native USDC.
 

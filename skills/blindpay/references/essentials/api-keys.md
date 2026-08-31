@@ -34,7 +34,7 @@ curl https://api.blindpay.com/v1/instances/in_000000000000/customers \
 
 **Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
 
-**Note:**
+**Success:**
 
 Done. Authenticate all requests by passing the header `Authorization: Bearer YOUR_API_KEY`.
 

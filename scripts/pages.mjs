@@ -61,6 +61,17 @@ export const GROUPS = [
     ],
   },
   {
+    dir: 'payables',
+    title: 'Payables (paying a registered bill)',
+    files: [
+      'payables',
+      'payable-boleto-pix',
+      'payable-invoice',
+      'payable-managed-wallet',
+      'payable-evm',
+    ],
+  },
+  {
     dir: 'virtual-accounts',
     title: 'Virtual accounts',
     files: ['virtual-accounts', 'virtual-accounts-create'],
@@ -75,13 +86,17 @@ export const GROUPS = [
       'transfer-quotes',
       'transfers',
       'receive',
-      'mint-usdb',
     ],
   },
   {
     dir: 'kb',
     title: 'Knowledge base (compliance, coverage, operations)',
     glob: 'kb',
+  },
+  {
+    dir: 'migrations',
+    title: 'Migration guides (moving from another provider)',
+    glob: 'migrations',
   },
   {
     dir: 'integrations',

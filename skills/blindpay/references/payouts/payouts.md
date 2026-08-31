@@ -66,7 +66,7 @@ The pattern is always the same: create a [payout quote](payout-quotes.md), autho
 
 **Note:**
 
-On development instances, use the test networks (`base_sepolia`, `stellar_testnet`, `solana_devnet`) and the `USDB` test token; see [Mint USDB](../wallets/mint-usdb.md). Production instances use the matching mainnet and `USDC` or `USDT`.
+On development instances, use the test networks (`base_sepolia`, `stellar_testnet`, `solana_devnet`) and the `USDB` test token; fund test wallets with a [payin](../payins/payins.md), which auto-completes on development instances. Production instances use the matching mainnet and `USDC` or `USDT`.
 
 ## Prerequisites
 
@@ -247,17 +247,17 @@ Configure a webhook endpoint once per instance. See [Webhooks](../essentials/web
 | `payout.complete` | A payout reaches `completed`, `failed`, or `refunded`. |
 | `payout.partnerFee` | A payout completes and a partner fee is owed. See [Partner fees](../essentials/partner-fees.md). |
 
-A payout can also execute a registered bill instead of a bank account: its `payable_id` is set, the bank fields are null, and the [payable](https://blindpay.com/docs/payables) emits its own `payable.*` events alongside these. Correlate the two through `payable_id`/`payout_id` and never count both completes as two payments.
+A payout can also execute a registered bill instead of a bank account: its `payable_id` is set, the bank fields are null, and the [payable](../payables/payables.md) emits its own `payable.*` events alongside these. Correlate the two through `payable_id`/`payout_id` and never count both completes as two payments.
 
 ## Related
 
 **Abstracted flavor (bank-rails framing, fiat-first API surface)**
 
 - [Payout quotes](payout-quotes.md): lock the exchange rate and fee split before executing
-- [Payables](https://blindpay.com/docs/payables): register a bill (boleto, arrecadação, PIX code) and pay it through this same flow
+- [Payables](../payables/payables.md): register a bill (boleto, arrecadação, PIX code or US invoice) and pay it through this same flow
 - [Bank accounts](bank-accounts.md): add and manage recipient bank accounts
 - [Payout with EVM](payout-evm.md), [Stellar](payout-stellar.md), and [Solana](payout-solana.md): on-chain authorization mechanics for external wallets
-- [Mint USDB](../wallets/mint-usdb.md): fund test wallets on development instances
+- [Payins](../payins/payins.md): accept fiat, and fund test wallets on development instances
 - [Webhooks](../essentials/webhooks.md): full event catalogue and signature verification
 
 **Advanced flavor (stablecoin and blockchain mechanics)**
@@ -267,5 +267,5 @@ A payout can also execute a registered bill instead of a bank account: its `paya
 - [Payout with Stellar](payout-stellar.md): authorize, sign the XDR, create
 - [Payout with Solana](payout-solana.md): delegate the tokens, then create
 - [Payout quotes](payout-quotes.md): lock the exchange rate, fees, and the on-chain approval payload
-- [Mint USDB](../wallets/mint-usdb.md): fund test wallets on development instances
+- [Payin with managed wallet](../payins/payin-managed-wallet.md): fund test wallets on development instances
 - [Supported chains](../kb/supported-chains.md): the full chain and token matrix
