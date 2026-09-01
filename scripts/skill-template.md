@@ -1,6 +1,6 @@
 ---
 name: blindpay
-description: BlindPay integration for payins/payouts and stablecoin on/off-ramps (ACH, wire, SWIFT, Pix, SPEI, SEPA, USDC/USDT), customer KYC/KYB, bank and virtual accounts, managed or blockchain wallets, cross-chain transfers, payables (boletos, PIX QR codes, invoices), partner fees, or webhooks.
+description: BlindPay integration for payins/payouts and stablecoin on/off-ramps (ACH, wire, SWIFT, Pix, SPEI, SEPA, USDC/USDT), customer KYC/KYB, bank and virtual accounts, managed or blockchain wallets, cross-chain transfers, payables (boletos, PIX QR codes, invoices), partner fees, webhooks, or migrating to BlindPay from another payments or custody provider (Bridge, Circle, Fireblocks, BitGo, Privy, and more) or from manual payouts and SWIFT wires.
 license: MIT
 metadata:
   author: blindpay

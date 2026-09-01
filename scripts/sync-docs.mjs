@@ -3,11 +3,13 @@
 //
 //   node scripts/sync-docs.mjs <path-to-docs>
 //
-// Every reference file under skills/blindpay/references is derived, never edited
-// by hand: the script wipes that tree, converts each docs page from VitePress
-// markdown (custom Vue components, flavor blocks, site-root links) into plain
-// markdown, and regenerates the reference index inside SKILL.md from
-// scripts/skill-template.md.
+// Reference files under skills/blindpay/references are derived, never edited by
+// hand: the script wipes each synced group's folder, converts each docs page
+// from VitePress markdown (custom Vue components, flavor blocks, site-root
+// links) into plain markdown, and regenerates the reference index inside
+// SKILL.md from scripts/skill-template.md. The exception is `manual` groups in
+// scripts/pages.mjs (currently migrations): those files are hand-maintained,
+// live in references/ permanently, and are only indexed here.
 
 import { readFileSync, writeFileSync, rmSync, mkdirSync, readdirSync, existsSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
@@ -36,7 +38,7 @@ function pagesInFolder(folder) {
 
 const groups = GROUPS.map(g => ({
   ...g,
-  files: g.glob ? pagesInFolder(g.glob) : g.files,
+  files: g.manual ? [] : g.glob ? pagesInFolder(g.glob) : g.files,
 }))
 
 // slug ("learn/instances") -> reference path relative to references/ ("essentials/instances.md")
@@ -266,12 +268,32 @@ function convert(slug, refPath) {
 
 /* ------------------------------------------------------------------- run --- */
 
-rmSync(REFS_DIR, { recursive: true, force: true })
-
 const index = []
 let count = 0
 for (const g of groups) {
   const entries = []
+  if (g.manual) {
+    for (const file of g.manual) {
+      const refPath = `${g.dir}/${file}`
+      if (!existsSync(join(REFS_DIR, refPath))) {
+        console.error(`Manual reference references/${refPath} is missing`)
+        process.exit(1)
+      }
+      // Title and description live in the file itself: its H1 and the first
+      // paragraph after it.
+      const src = readFileSync(join(REFS_DIR, refPath), 'utf8')
+      const title = src.match(/^# (.+)$/m)?.[1]
+      const description = src.split(/\n\n+/)[1]?.replace(/\s+/g, ' ').trim()
+      if (!title || !description || description.startsWith('Source:')) {
+        console.error(`Manual reference references/${refPath} needs an H1 title followed by a description paragraph`)
+        process.exit(1)
+      }
+      entries.push({ refPath, title, description })
+    }
+    index.push({ title: g.title, entries })
+    continue
+  }
+  rmSync(join(REFS_DIR, g.dir), { recursive: true, force: true })
   for (const slug of g.files) {
     const refPath = slugToRef.get(slug)
     const { title, description, content } = convert(slug, refPath)

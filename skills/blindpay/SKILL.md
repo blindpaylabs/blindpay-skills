@@ -1,6 +1,6 @@
 ---
 name: blindpay
-description: BlindPay integration for payins/payouts and stablecoin on/off-ramps (ACH, wire, SWIFT, Pix, SPEI, SEPA, USDC/USDT), customer KYC/KYB, bank and virtual accounts, managed or blockchain wallets, cross-chain transfers, payables (boletos, PIX QR codes, invoices), partner fees, or webhooks.
+description: BlindPay integration for payins/payouts and stablecoin on/off-ramps (ACH, wire, SWIFT, Pix, SPEI, SEPA, USDC/USDT), customer KYC/KYB, bank and virtual accounts, managed or blockchain wallets, cross-chain transfers, payables (boletos, PIX QR codes, invoices), partner fees, webhooks, or migrating to BlindPay from another payments or custody provider (Bridge, Circle, Fireblocks, BitGo, Privy, and more) or from manual payouts and SWIFT wires.
 license: MIT
 metadata:
   author: blindpay
@@ -233,23 +233,7 @@ Five `kyc_status` values gate what a customer can do: `verifying`, `approved`, `
 
 ### Migration guides (moving from another provider)
 
-- [Migrate from Anchorage Digital to BlindPay](references/migrations/anchorage.md) - Keep Anchorage Digital for custody and move the stablecoin-to-fiat leg to BlindPay: map transfers, withdrawals, and settlement events to BlindPay quotes, payouts, and webhooks.
-- [Migrate from BitGo to BlindPay](references/migrations/bitgo.md) - Move the stablecoin-to-fiat leg of a BitGo integration to BlindPay: map wallets, transfers, and settlement webhooks to BlindPay customers, quotes, payouts, and webhook events.
-- [Migrate from Bridge to BlindPay](references/migrations/bridge.md) - Move an existing Bridge integration to the BlindPay API: map customers, external accounts, liquidation addresses, and transfers to their BlindPay equivalents.
-- [Migrate from Circle to BlindPay](references/migrations/circle.md) - Move payouts and fiat on/off ramps from Circle Mint, Circle Payouts, or the Circle Payments Network to BlindPay's quote-and-execute API with local rails.
-- [Migrate from Cobo to BlindPay](references/migrations/cobo.md) - Move the stablecoin-to-fiat leg of a Cobo Payments integration to BlindPay: keep Cobo for wallet custody if you want, and replace top-up addresses, order mode, and payout destinations with customers, quotes, and payouts.
-- [Migrate from Coinbase CDP to BlindPay](references/migrations/coinbase-cdp.md) - Move the stablecoin-to-fiat offramp leg of a Coinbase Developer Platform integration to BlindPay: add Pix, SPEI, SEPA, and wire payouts while CDP wallets keep custody.
-- [Migrate from Conduit to BlindPay](references/migrations/conduit.md) - Move a Conduit cross-border payments integration to BlindPay: counterparties, corridors, and settlement tracking on the quote-and-execute model.
-- [Migrate from Crossmint to BlindPay](references/migrations/crossmint.md) - Move the stablecoin-to-fiat leg of a Crossmint integration to BlindPay while Crossmint keeps handling wallets, checkout, or orchestration.
-- [Migrate from Dfns to BlindPay](references/migrations/dfns.md) - Keep Dfns for MPC wallet custody and move the stablecoin-to-fiat leg to BlindPay: map transfers and exchange withdrawals to quotes, payouts, and registered external wallets.
-- [Migrate from Dynamic to BlindPay](references/migrations/dynamic.md) - Keep Dynamic for embedded and server wallets, move the stablecoin-to-fiat offramp leg to BlindPay: register the Dynamic wallet, quote and execute payouts, and verify webhooks.
-- [Migrate from Fern to BlindPay](references/migrations/fern.md) - Move a Fern stablecoin integration to BlindPay: customers, bank accounts, wallets, quote-then-execute payins and payouts, and Svix-signed webhooks.
-- [Migrate from Fireblocks to BlindPay](references/migrations/fireblocks.md) - Move the stablecoin-to-fiat payout leg of a Fireblocks integration to BlindPay: re-onboard payees, rebuild the quote-then-payout flow, and port webhooks, while Fireblocks stays as custodian.
-- [Migrate from manual payouts to BlindPay](references/migrations/manual-payouts.md) - Turn a spreadsheet-and-bank-portal payout operation into an automated, webhook-driven API flow with an auditable state machine.
-- [Migrate from Privy to BlindPay](references/migrations/privy.md) - Keep Privy for embedded and server wallets, move the stablecoin-to-fiat offramp leg to BlindPay: register the wallet, quote and execute payouts, and verify webhooks.
-- [Migrate from SWIFT wires to BlindPay](references/migrations/swift-wires.md) - Replace multi-day international wires with same-day stablecoin settlement over local rails, keeping SWIFT as a fallback for corridors BlindPay doesn't cover.
-- [Migrate from Turnkey to BlindPay](references/migrations/turnkey.md) - Keep Turnkey for wallets and signing, and move the stablecoin-to-fiat offramp leg of a Turnkey-based product to BlindPay: map payout accounts, quotes, and webhooks.
-- [Migrate from Utila to BlindPay](references/migrations/utila.md) - Keep Utila as custodian and signer, and route the stablecoin-to-fiat leg through BlindPay: map vaults, wallets, transactions, and webhooks to their BlindPay equivalents.
+- [Migrate to BlindPay](references/migrations/migrate-to-blindpay.md) - Move any existing integration to BlindPay — Anchorage Digital, BitGo, Bridge, Circle, Cobo, Coinbase CDP, Conduit, Crossmint, Dfns, Dynamic, Fern, Fireblocks, Privy, Turnkey, Utila, manual payouts, or SWIFT wires: one universal playbook plus per-provider concept mappings.
 
 ### AI tooling integrations
 
