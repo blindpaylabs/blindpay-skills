@@ -18,6 +18,8 @@ BlindPay ships official SDKs for Node.js, Python, Go, PHP, and Swift. Every SDK 
 
 Each repository's README has the full install and usage guide.
 
+A small number of endpoints are excluded from every generated SDK, currently `POST /upload/extract` (see [Invoice payables](../payables/payable-invoice.md#read-the-invoice-with-ai)). Call them over raw HTTP even if you use an SDK for everything else.
+
 ## OpenAPI spec
 
 Download the OpenAPI 3.1 spec to generate a typed client in any language:

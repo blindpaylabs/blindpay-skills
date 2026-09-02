@@ -6,6 +6,8 @@ Source: https://blindpay.com/docs/learn/sandbox-vs-production
 
 Development and production instances expose the same API surface: same endpoints, same fields, same response shapes. What differs is how money, KYC, and reviews behave behind the scenes. This page lists every difference so nothing surprises you at go-live.
 
+There's also no separate hostname: every request, on either environment, goes to `https://api.blindpay.com`. Which environment a request hits is determined entirely by which instance your API key belongs to, not by the URL you call.
+
 ## KYC
 
 On development instances, every customer is auto-approved regardless of the documents you submit. Use any placeholder URLs for document fields, they are not actually verified.
@@ -58,6 +60,44 @@ On production, BlindPay waits for the real payment to arrive before completing t
 | `spei` | MXN | Up to 10 minutes |
 | `transfers` | ARS | Up to 10 minutes |
 | `pse` | COP | Up to 10 minutes |
+
+## Payables
+
+Development instances have no provider connection for boleto and PIX, so registering a code never checks it against a real bill. Embed one of these digit sequences anywhere in `boleto_barcode` or `pix_qrcode` to force a specific outcome at registration:
+
+| Sequence in the code | Outcome |
+| --- | --- |
+| `11111` | Registration fails: `unresolvable_payable_code` |
+| `22222` | Registration fails: `payable_already_paid_or_expired` (boleto and PIX only) |
+| `33333` | Registration fails: `pix_code_amount_required` (PIX only) |
+| `44444` | An arrecadação code resolves as a tax bill instead of a utility bill |
+
+Any other digits resolve successfully. The simulated amount comes from the code itself, the same way it would on production: the last 10 digits of a boleto linha digitável, or the PIX EMV amount field. Use that to test different payable amounts without a real bill.
+
+## Document analysis and extraction
+
+On development instances, `POST /upload/analyze` skips the AI call entirely and always returns:
+
+```json
+{
+  "approval_rate": "high",
+  "description": "This is a development instance, all documents are good."
+}
+```
+
+`POST /upload/extract` also skips the AI call on development instances and returns a fixed sample invoice every time:
+
+| Field | Value |
+| --- | --- |
+| `amount` | `425000` (US$ 4,250.00) |
+| `currency` | `USD` |
+| `due_date` | `2026-09-15` |
+| `invoice_number` | `INV-DEV-0001` |
+| `to.legal_name` | Northwind Cloud Services Inc (San Francisco, CA) |
+| `line_items` | 2 fixed items |
+| `payment_options` | `ach` and `wire`, same routing/account numbers |
+
+Both hold regardless of the file or `type` you send. Use them to build and test your document-review and invoice-creation flows without spending on real analysis calls.
 
 ## Virtual accounts
 
@@ -122,3 +162,5 @@ Create a webhook endpoint on the production instance pointing at your production
 - [KYC](../kb/kyc.md): verification levels, required fields, and limits
 - [Webhooks](webhooks.md): events, payloads, and signature verification
 - [Cut-off times](../kb/cut-off-times.md): production settlement windows by payment method
+- [Analyze Document](analyze-document.md): document rating thresholds
+- [Payables](../payables/payables.md): registering and paying a boleto, PIX, or invoice bill

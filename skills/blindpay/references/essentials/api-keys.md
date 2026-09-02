@@ -23,6 +23,10 @@ Keys are shown once at creation. Copy and store them securely: you cannot retrie
 
 Creating a key requires a dashboard (user) session; it cannot be done from an existing API key. This prevents a compromised key from minting new keys for itself.
 
+**Note:**
+
+If your instance has **Require passkey for critical actions** turned on (**Settings → Instance**), the dashboard asks you to verify with a registered passkey before it creates the key.
+
 ## Authenticate requests
 
 Pass the key as a bearer token in every request:
@@ -44,7 +48,12 @@ Done. Authenticate all requests by passing the header `Authorization: Bearer YOU
 - Use environment variables to inject keys at runtime instead of hardcoding them.
 - Rotate keys immediately if you suspect a key has been compromised: delete the old key and create a new one in the dashboard. There is no separate rotate endpoint; delete and recreate is the only path, and deleting a key revokes it immediately.
 - Use separate keys per environment: one for development, one for production. Keys created on a development instance will not work against a production instance, and vice versa.
-- Keys accept an IP whitelist at creation time via the API if your integration calls the API from a fixed set of servers.
+
+## IP whitelisting
+
+Restrict a key to a fixed set of source IPs by setting `ip_whitelist` when you create it via the API. Only IPv4 addresses are accepted; an IPv6 address is rejected with `400 VALIDATION_FAILED`.
+
+Leave `ip_whitelist` `null` or omit it (the default) to allow requests from any IP. When it's set, it is enforced on every request made with the key, not just at creation: a request from an IP outside the list fails with `401 AUTH_IP_BLOCKED` before it reaches your resource.
 
 ## Key types
 

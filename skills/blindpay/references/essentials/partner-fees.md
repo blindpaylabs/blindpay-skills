@@ -26,13 +26,20 @@ Partner fees follow a monthly collection and withdrawal cycle:
 - On the first day of the following month, the total balance is released and becomes available for withdrawal.
 - BlindPay nets your outstanding invoice out of the accumulated fees first. You never pay your BlindPay invoice separately; you receive the net amount.
 
-You receive a `payin.partnerFee` or `payout.partnerFee` webhook event as each fee is collected. Track collection status through the `tracking_partner_fee` object in quote and transaction responses.
+**Note:**
+
+`payin.partnerFee` and `payout.partnerFee` are declared in the webhook catalog but do not currently fire, and there is no `tracking_partner_fee` object on quote or transaction responses. The amount collected on a given transaction is `partner_fee_amount` on that quote (see [Quote response fields](#quote-response-fields) below); there is no separate real-time event or status object for partner fee collection today.
 
 ## Configure a partner fee
 
 ### Create a fee configuration
 
-Create a fee configuration for payins, payouts, or both. Percentage fees are in basis points (`100` means 1%, capped at `1000` for 10%); flat fees are integers in minor units (`200` means $2.00).
+Create a fee configuration for payins, payouts, or both:
+
+| Field | Range | Meaning |
+| --- | --- | --- |
+| `payin_percentage_fee`, `payout_percentage_fee` | 0-1000 | Basis points; `100` means 1%. Capped at 10% of the transaction amount. |
+| `payin_flat_fee`, `payout_flat_fee` | 0-100000 | Minor units (cents); `200` means $2.00. Capped at $1,000.00. |
 
 ```bash [cURL]
 curl --request POST \
@@ -48,9 +55,13 @@ curl --request POST \
   }'
 ```
 
-Save the `id` from the response: this is your partner fee ID (`pf_...`). You can also manage fee configurations from the [BlindPay dashboard](https://app.blindpay.com), under the instance's Partner Fees tab.
+Save the `id` from the response: this is your partner fee ID (`pf_...`). You can also manage fee configurations from the [BlindPay dashboard](https://app.blindpay.com), under the instance's Partner Fees tab. `POST /partner-fees` and `DELETE /partner-fees/{id}` accept an `Idempotency-Key` header to safely retry the request.
 
-To make a fee the default for all [virtual account](../virtual-accounts/virtual-accounts.md) deposits, set `virtual_account_set: true` on creation (only one active fee per instance can hold the flag). See [Virtual accounts](#virtual-accounts) below for how defaults and per-account fees interact.
+To make a fee the default for all [virtual account](../virtual-accounts/virtual-accounts.md) deposits, set `virtual_account_set: true` on creation (only one active fee per instance can hold the flag; defaults to `false` when omitted). Send it as an actual boolean, not a string: any non-empty string value, including `"false"`, is coerced to `true`. See [Virtual accounts](#virtual-accounts) below for how defaults and per-account fees interact.
+
+**Warning:**
+
+There is no update endpoint. To change a fee's amounts or its `virtual_account_set` flag, delete the existing configuration and create a new one.
 
 ### Pass it in your quote requests
 
@@ -124,6 +135,36 @@ Deleting a fee configuration automatically unpins it from any virtual accounts r
 
 Every virtual account deposit always delivers at least $0.01 on-chain. The partner fee is collected from what remains after any transaction-time BlindPay fee, so on small deposits collection can be partial (a $5.00 fee on a $5.00 deposit collects $4.99) or zero on micro-deposits. See [fees on deposits](../virtual-accounts/virtual-accounts.md#fees-on-deposits).
 
+**Warning:**
+
+A partner fee (pinned or the instance-wide `virtual_account_set` default) is never applied to a virtual account deposit that settles on Solana or Tron. Deposits on those two networks skip partner fee collection entirely, whatever fee is configured.
+
+## Manage fee configurations
+
+```bash [cURL]
+curl --url https://api.blindpay.com/v1/instances/in_000000000000/partner-fees \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+```bash [cURL]
+curl --url https://api.blindpay.com/v1/instances/in_000000000000/partner-fees/pf_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+```bash [cURL]
+curl --request DELETE \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/partner-fees/pf_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+- `GET /partner-fees` returns every configuration for the instance in a single array. There's no pagination.
+- `GET /partner-fees/{id}` and `POST /partner-fees` return only `id`, `instance_id`, `name`, and the four fee fields. Only the list endpoint also returns `virtual_account_set`, `created_at`, and `updated_at` for each item. List the fees rather than reading the create or single-get response if you need those.
+- `DELETE /partner-fees/{id}` always returns `{"success": true}`, even when `id` doesn't exist, belongs to another instance, or was already deleted. The response doesn't tell you whether a row was actually removed.
+
+**Warning:**
+
+`GET /partner-fees/{id}` on an `id` that doesn't exist, belongs to another instance, or was already deleted returns `500 INTERNAL_ERROR`, not `404`. Don't use the status code to detect a missing fee; only look up an `id` you got back from a prior create or list call.
+
 ## Quote response fields
 
 Each payin quote, payout quote, and transfer quote response includes:
@@ -131,9 +172,6 @@ Each payin quote, payout quote, and transfer quote response includes:
 | Field | Description |
 | --- | --- |
 | `partner_fee_amount` | Exact amount collected as a partner fee for this transaction |
-| `tracking_partner_fee.status` | Collection status |
-| `tracking_partner_fee.transaction_hash` | On-chain hash when the fee is delivered |
-| `tracking_partner_fee.completed_at` | Timestamp when fee delivery completed |
 
 ## Example
 
@@ -151,12 +189,6 @@ Monthly settlement example:
 | Total partner fees collected in January | $500.00 |
 | BlindPay invoice for January | $250.00 |
 | Available for withdrawal on February 1 | $250.00 |
-
-## Webhooks
-
-**Note:**
-
-Subscribe to `payin.partnerFee` and `payout.partnerFee` to track fee collection in real time, instead of polling quote or transaction objects.
 
 ## Related
 

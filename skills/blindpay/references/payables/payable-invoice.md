@@ -128,9 +128,20 @@ The dashboard prefills the invoice form by reading the PDF with `POST /upload/ex
 
 It takes an invoice PDF or image and returns the fields above so you can prefill the request: `amount` (cents), `currency`, `due_date`, `invoice_number`, the `to` party, `line_items` and `payment_options`.
 
-Invoices often print more than one way to pay, so `payment_options` has one entry per printed instruction block, ordered `ach`, `wire`, `international_swift`. Each carries its own `routing_number` and `account_number` (US rails) or `iban` and `swift_bic`, plus `account_type`, `beneficiary_name` and `bank_name`. Pick the option for the rail you want to pay with; ACH is the cheapest when the vendor accepts it.
+Invoices often print more than one way to pay, so `payment_options` has one entry per printed instruction block, ordered `ach`, `wire`, `international_swift`. When a single printed block covers both ACH and wire with one routing/account number, extraction returns two entries (`ach` and `wire`) sharing that same number; when the invoice prints separate ACH and wire numbers, each keeps its own. Each entry carries its own `routing_number` and `account_number` (US rails) or `iban` and `swift_bic`, plus `account_type`, `beneficiary_name` and `bank_name`. Pick the option for the rail you want to pay with; ACH is the cheapest when the vendor accepts it. Extraction never returns intermediary-bank fields, even for `international_swift` options; if the invoice prints an intermediary bank block, add it to the payable's `bank_account` manually.
 
-Every field is nullable and nothing is guessed: a number that fails format validation comes back `null`, and an option with no usable number is dropped. The result is not a payable, it is input for one, and the person registering should confirm the bank fields against the document before submitting. Development instances return a fixed sample result.
+`amount` is the total due: when the invoice shows both a total and an amount already paid, `amount` is the difference. `due_date` is read directly when printed, otherwise computed from payment terms (for example "Net 30") plus the issue date; the issue date itself is never returned as `due_date`. Line items with a negative `price` or a `quantity` of `0`, such as proration credits or refund rows some invoicing tools print, are dropped before the result is returned.
+
+Every field is nullable and nothing is guessed: a number that fails format validation comes back `null`, and an option with no usable number is dropped.
+
+| Field | Format check |
+| --- | --- |
+| `routing_number` | Exactly 9 digits, and a valid ABA routing checksum |
+| `account_number` | 4-17 digits, and different from `routing_number` |
+| `iban` | 2 letters, 2 digits, then 11-30 alphanumeric characters |
+| `swift_bic` | 8 or 11 characters matching the SWIFT/BIC format |
+
+A masked number (`****1234`) fails these checks and comes back `null` rather than being partially accepted. The result is not a payable, it is input for one, and the person registering should confirm the bank fields against the document before submitting. Development instances return a fixed sample result.
 
 ```bash [cURL]
 curl --request POST \

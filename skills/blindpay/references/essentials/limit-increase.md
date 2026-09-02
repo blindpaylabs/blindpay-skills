@@ -26,6 +26,10 @@ Transfer limits are calculated on the stablecoin amount transferred. Each custom
 
 The customer must exist and have `kyc_status` of `approved`; you cannot request a limit increase for a customer still in KYC review. You also need the supporting document already hosted at a URL, for example via the [Upload](upload.md) endpoint.
 
+Only one request can be in flight per customer at a time. If the customer already has a request with `status: "in_review"`, a new request returns `400 customer_already_has_limit_increase_in_review`. Wait for the existing request to be approved or rejected before submitting another.
+
+Each requested amount (`per_transaction`, `daily`, `monthly`) is capped at 100,000,000,000 (US$ 1,000,000,000.00) in USD cents. A value above that is rejected.
+
 ## Supporting document types
 
 Pick the `supporting_document_type` that matches the customer type and the document you are submitting:
@@ -88,12 +92,16 @@ Each entry carries the requested amounts, the review status, and, once reviewed,
 
 Compliance can approve lower limits than requested. Always read the `approved_*` fields rather than assuming the requested amounts were granted.
 
+## Testing
+
+On a development instance, every limit increase request is auto-approved immediately at the exact amounts requested: `status` is `approved` as soon as the request is created, `reviewed_by` is `sandbox-auto-approval`, and `approved_per_transaction`, `approved_daily`, `approved_monthly` mirror what you asked for exactly. There is no compliance review to wait on, so you see the full `limitIncrease.new` -> `limitIncrease.update` flow without needing a real reviewer. On a production instance, a request stays `in_review` until BlindPay's compliance team decides, and the approved amounts can be lower than requested.
+
 ## Webhooks
 
 | Event | Fires when |
 | --- | --- |
 | `limitIncrease.new` | A limit increase request is created |
-| `limitIncrease.update` | Compliance approves or rejects the request |
+| `limitIncrease.update` | Compliance approves or rejects the request (immediately, on a development instance) |
 
 See [Webhooks](webhooks.md) for signature verification and delivery details.
 

@@ -18,6 +18,10 @@ Every customer must complete a KYC process to verify their identity before sendi
 
 We collect the following data per customer `type` (business, individual) and `kyc_type` (standard, enhanced). Fields marked with `*` are **optional**.
 
+**Note:**
+
+Existing customers can also carry `kyc_type: light`, a legacy tier BlindPay no longer issues. Creating a customer with `kyc_type: "light"` is always rejected, for both `individual` and `business`; you'll only see `light` on customers migrated from BlindPay's older KYC tiers. It still matters downstream: `light` customers are blocked from ACH, wire, and RTP bank accounts, see [Bank accounts](../payouts/bank-accounts.md).
+
 **KYC/B Standard**
 
 | Individual                                               | Business                                                                                 |
@@ -59,6 +63,53 @@ All customers from [high risk countries](../kb/supported-countries.md#high-risk-
 
 For document quality and submission guidelines, see [KYC Basics](../kb/kyc-basics.md#document-quality).
 
+**Warning:**
+
+When `country` is `US`, `state_province_region` must be exactly two capital letters (for example `NY`, not `New York`). This applies to the customer and to each business owner. Other countries accept the full region name.
+
+`latitude` and `longitude` are optional fields you can send on customer create (latitude between -90 and 90, longitude between -180 and 180). BlindPay forwards them to its identity and fraud-review providers as extra signal; they don't change which KYC tier is required.
+
+### Brazil-specific tax ID validation
+
+When the customer's country is `BR`:
+
+| Type | Rule |
+| --- | --- |
+| Individual | `id_doc_country` must be `BR`. `tax_id` must be a valid CPF. If `id_doc_type` is `ID_CARD`, a valid RG is also accepted. |
+| Business | `country` must be `BR`. `tax_id` must be a valid CNPJ. |
+
+An invalid value returns `400 invalid_cpf_tax_id`, `400 invalid_cpf_or_rg_tax_id`, or `400 invalid_cnpj_tax_id`. The same checks run on both create and update.
+
+### `additional_info`
+
+`additional_info` is a list of supporting documents used for extended verification, most commonly to activate a Zenus-issued virtual account. Each entry is `{ label, value }`, where `value` is typically a file URL from the [Upload](upload.md) endpoint and `label` is one of:
+
+| Label |
+| --- |
+| `EIN_LETTER` |
+| `KYC_PROVIDER_DOCUMENT` |
+| `FLOW_OF_FUNDS` |
+| `BANK_STATEMENT` |
+| `TAX_RETURN` |
+| `AUDITED_FINANCIALS` |
+| `OPERATING_AGREEMENT` |
+| `BOARD_RESOLUTION` |
+| `CERTIFICATE_OF_GOOD_STANDING` |
+| `BUSINESS_LICENSE` |
+| `MSB_LICENSE` |
+| `POWER_OF_ATTORNEY` |
+| `TRUST_DEED` |
+| `SHAREHOLDER_REGISTRY` |
+| `BENEFICIAL_OWNER_DECLARATION` |
+| `COMPLIANCE_QUESTIONNAIRE` |
+| `PROOF_OF_EMPLOYMENT` |
+| `REFERENCE_LETTER` |
+| `OTHER` |
+
+**Warning:**
+
+`additional_info` is append-only on update. Existing entries are always kept even if you omit them from the request body; only entries beyond the current count get added. You can't remove or reorder an entry that's already saved through this field.
+
 ### Review timeline
 
 | Verification Type | Review Timeline            |
@@ -74,6 +125,9 @@ Every customer has a KYC status indicating the current state of their verificati
 - **`verifying`**: KYC is being processed
 - **`approved`**: KYC verified and approved
 - **`rejected`**: KYC rejected
+- **`deprecated`**: a legacy status from before the receivers-to-customers migration; you won't see this on customers created going forward
+- **`pending_review`**: an Enhanced KYC customer was approved by BlindPay's identity vendor but is held for manual compliance review before the final decision; the customer can't transact yet
+- **`awaiting_contract`**: a legacy status kept only for backward compatibility with older records; not set on new customers
 - **`compliance_request`**: compliance team opened a [Request for Information](rfi.md) and is waiting for additional documents or clarifications; the customer is paused
 - **`approved_rfi`**: the customer is approved and fully operational, but has an open [Request for Information](rfi.md#approved-with-an-open-rfi) they still need to answer
 
@@ -93,6 +147,28 @@ Transfer limits are calculated on the stablecoin amount transferred. Each custom
 | Per transaction | US$ 10,000   | US$ 30,000   | US$ 50,000   |
 | Daily           | US$ 50,000   | US$ 100,000  | US$ 100,000  |
 | Monthly         | US$ 100,000  | US$ 250,000  | US$ 500,000  |
+
+### Check remaining limits
+
+The default limits above are the ceiling. To see how much of that ceiling a customer has left, call:
+
+```bash [cURL]
+curl --request GET \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/limits/customers/re_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+```json
+{
+  "success": true,
+  "limits": {
+    "payin": { "daily": 500000, "monthly": 2000000 },
+    "payout": { "daily": 300000, "monthly": 1000000 }
+  }
+}
+```
+
+Each number is what's left, in USD cents, not what's been used: the customer's daily/monthly limit minus their completed volume in that window. Day and month boundaries are UTC calendar day and month, not a rolling 24-hour or 30-day window, and only `completed` payins and payouts count. A value can go negative, for example right after a [limit increase](limit-increase.md) request is approved for less than the customer had already used under the previous, higher limit. Returns `404 customer_not_found` if the customer doesn't exist in this instance.
 
 **Warning:**
 
@@ -231,6 +307,49 @@ curl --request POST \
 ### Testing scenarios
 
 By default all customers created in `development` instances are automatically approved. To test a rejection, use `Fail` as the first name (individuals) or legal name (businesses).
+
+## Retrieve a customer
+
+```bash [cURL]
+curl --request GET \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/customers/re_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+The response includes `is_tos_accepted`, a boolean computed by comparing the customer's stored terms-of-service acceptance against the version currently in effect. If BlindPay updates the terms after the customer accepted, this flips to `false` even though the customer didn't do anything differently; see [Accepting a new version](terms-of-service.md#accepting-a-new-version).
+
+**Note:**
+
+`id` and `customer_id` are always the same value on a customer. `customer_id` is the current name; `id` is kept for backward compatibility with integrations built before the receivers-to-customers rename. Use either field, they never diverge.
+
+## List customers
+
+```bash [cURL]
+curl --request GET \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/customers \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+Without any pagination parameter, the response is a plain array of customers. Pass `limit`, `starting_after`, or `ending_before` and the response shape changes to a paginated object instead:
+
+```json
+{
+  "data": [ /* customers */ ],
+  "pagination": { "has_more": false, "next_page": null, "prev_page": null }
+}
+```
+
+Filter the list with query parameters:
+
+| Parameter | Description |
+| --- | --- |
+| `customer_name` | Matches against first + last name or legal name. Takes priority over `full_name` if you send both. |
+| `full_name` | Same match as `customer_name`, kept for backward compatibility. |
+| `status` | Filter by `kyc_status`. |
+| `customer_id` | Exact match on a single customer's `id`. |
+| `bank_account_id` | Only customers holding this bank account. Returns an empty list if the bank account doesn't belong to the instance. |
+| `country` | Exact match on the customer's `country`. |
+| `limit`, `starting_after`, `ending_before` | Cursor pagination. Omit all three to get the bare array above. |
 
 ## Related
 

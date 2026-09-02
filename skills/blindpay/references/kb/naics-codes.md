@@ -10,6 +10,10 @@ NAICS (North American Industry Classification System) codes classify businesses 
 
 Below is the full list of accepted industry codes, organized by industry. If your industry isn't listed, contact [compliance@blindpay.com](mailto:compliance@blindpay.com) and we'll add the appropriate code for you.
 
+## Fetch this list dynamically
+
+The table below is also available at runtime from `GET /available/naics` (no API key required), returning `{ label, value }` pairs, the same list used as the `business_industry` field's options on [bank accounts](../payouts/bank-accounts.md#compliance-fields-for-ach-wire-rtp-and-swift).
+
 ## Agriculture
 
 | NAICS Code | Industry Description                              |

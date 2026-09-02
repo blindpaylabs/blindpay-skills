@@ -42,7 +42,9 @@ Go to the [BlindPay dashboard](https://app.blindpay.com) and click **Create inst
 
 ### Choose an environment
 
-Choose whether the new instance is `development` or `production`. Development instances are ready immediately.
+Choose whether the new instance is `development` or `production`. Development instances are ready immediately. You can own up to 10 development instances (deleting one doesn't free up a slot); production instances have no fixed cap here.
+
+When creating a development instance, you can turn on **Seed sample data** to populate it with sample customers, bank accounts, blockchain wallets, virtual accounts, and a handful of quotes, payouts, and payins, so the dashboard isn't empty while you explore.
 
 ![Create instance screen in the BlindPay dashboard](https://pub-4fabf5dd55154f19a0384b16f2b816d9.r2.dev/Frame%201216401961.jpg)
 
@@ -53,6 +55,114 @@ New production instances may take up to 3 business days to set up. See [Cut-off 
 ## API keys are per-instance
 
 An API key authenticates requests to one instance only. A key created for instance A will not work against instance B, even within the same organization. See [API keys](api-keys.md) to create and manage keys.
+
+## Manage your instance
+
+### Update settings
+
+```bash [cURL]
+curl --request PUT \
+  --url https://api.blindpay.com/v1/instances/in_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "My instance",
+    "email_notifications": true,
+    "require_passkey": false
+  }'
+```
+
+Requires the owner or admin role on the instance.
+
+**Warning:**
+
+`name` is required on every call, even when you are only changing one other field. Send the instance's current name along with whatever you are updating, or the request fails with `400`.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `name` | string | Required on every call. |
+| `email_notifications` | boolean | Defaults to `true`. |
+| `require_passkey` | boolean | Defaults to `false`. |
+| `customer_rfi_emails_enabled` | boolean, optional | Omit it to leave the current value unchanged; there is no default on update. |
+| `compliance_emails` | string[], optional, max 20 | When set, [instance RFI](../kb/instance-requests.md) and customer [RFI](rfi.md) emails go only to these addresses instead of every team member. Send an empty array to go back to notifying the whole team. |
+| `customer_invite_redirect_url` | string, optional | Where a customer lands after finishing a hosted onboarding link. |
+
+### Delete an instance
+
+Only the instance's current owner can delete it (`400 user_not_owner` for anyone else). Deleting is a soft delete: the instance stops resolving immediately, but nothing is destroyed on BlindPay's side.
+
+```bash [cURL]
+curl --request DELETE \
+  --url https://api.blindpay.com/v1/instances/in_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+## Team members
+
+### List members
+
+```bash [cURL]
+curl --url https://api.blindpay.com/v1/instances/in_000000000000/members \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+Returns every member of the instance with their `role`.
+
+### Roles
+
+| Role |
+| --- |
+| `owner` |
+| `admin` |
+| `finance` |
+| `checker` |
+| `operations` |
+| `developer` |
+| `viewer` |
+
+`owner` is never assigned directly: `GET /instances/{id}/members` always reports it for whoever currently owns the instance, overriding whatever role is stored for that member. Use ownership transfer, below, to change who holds it.
+
+### Update a member's role
+
+```bash [cURL]
+curl --request PUT \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/members/us_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "user_role": "developer"
+  }'
+```
+
+Requires the owner, admin, or checker role on the instance. You cannot change the current owner's role this way: that request is rejected with `400 cannot_update_instance_owner`. Transfer ownership first if you need to change what the owner can do.
+
+### Remove a member
+
+```bash [cURL]
+curl --request DELETE \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/members/us_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+Requires the owner or admin role on the instance. The current owner cannot be removed this way (`400 cannot_delete_instance_owner`); transfer ownership first.
+
+### Transfer ownership
+
+```bash [cURL]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/ownership \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "user_id": "us_000000000000"
+  }'
+```
+
+Only the current owner can transfer ownership, and only to someone who is already a member of the instance (`400 new_owner_not_instance_member` otherwise; `400 already_instance_owner` if you pass yourself). Both accounts end up with the `admin` role in the underlying membership record: `owner` itself is derived from who currently holds ownership, not from a stored role, so the previous owner keeps full admin access after the transfer.
+
+**Note:**
+
+You can pass an `Idempotency-Key` header (up to 255 characters) on any update, delete, or ownership-transfer call on this page. Retrying with the same key and the same body replays the original response instead of repeating the action; the same key with a different body is rejected. Keys are remembered for 24 hours.
 
 ## Related
 

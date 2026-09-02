@@ -76,6 +76,10 @@ For a boleto, that derived `amount` is not necessarily what gets charged. Regist
 
 Quote an overdue boleto twice on different days and you can get two different amounts, because interest keeps accruing. Always pay against a fresh quote rather than a cached figure.
 
+Quoting a boleto can also update the payable itself, not just price it: `due_date` and `to` are re-resolved against the same rail call. `due_date` is overwritten whenever the resolved code carries one; `to` is only filled in if it did not already carry a `legal_name`. A `GET` right after quoting can therefore show a different `amount`, `due_date`, or `to` than the one you got at registration.
+
+Boletos also only clear on Brazilian banking days, 06:30 through 18:30 BRT; above R$250,000.00 the same-day window closes at 14:30 BRT instead. Quoting outside those hours or on a closure defers execution to the next banking day. If that deferral would push execution past the boleto's `due_date`, the quote is rejected with `payable_boleto_would_be_overdue`.
+
 PIX and invoice-with-bank-details payables use the declared `amount` as-is; there is no rail-side recalculation for those.
 
 ### Minimum
@@ -83,6 +87,8 @@ PIX and invoice-with-bank-details payables use the declared `amount` as-is; ther
 A payable is held to the same minimum as a payout: the bill must be worth at least 10.00 USD on the paying side. Registration converts the amount and rejects anything under it with `LIMITS_AMOUNT_OUT_OF_RANGE`, so a bill that could never be paid never becomes a draft.
 
 The quote enforces the same floor against the rate and fees of the moment, so a bill sitting a few cents above it can still be rejected later if the rate moves.
+
+Quoting a payable also counts against the customer's daily and monthly payout volume limits, the same running total described in [Limit increase](../essentials/limit-increase.md) that bank-account payouts share. A payable quote that would exceed either one fails with `LIMITS_VOLUME_EXCEEDED`.
 
 ## Status lifecycle
 
@@ -123,7 +129,11 @@ curl --request POST \
 }'
 ```
 
-Exactly one of `bank_account_id` or `payable_id` is accepted. With `payable_id`, do not send `request_amount` or `currency_type`: the amount comes from the payable (re-resolved from the rail for a boleto). Save the quote's `id`, then execute the payout the normal way:
+Exactly one of `bank_account_id` or `payable_id` is accepted. With `payable_id`, do not send `request_amount` or `currency_type`: the amount comes from the payable (re-resolved from the rail for a boleto). A payable quote always prices with the sender covering fees: the bill's amount is fixed, so BlindPay grosses up the stablecoin amount you're charged instead of reducing what the payable receives. This is not configurable per payable quote.
+
+An invoice payable's owned bank account is checked again at quote time: it must be `type` `ach` or `wire` (else `PAYABLES_BANK_ACCOUNT_INVALID`), `status: approved` (else `BANK_ACCOUNTS_NOT_APPROVED`), and its settlement currency must match the payable's `currency` (else `PAYABLES_BANK_ACCOUNT_INVALID`). An `ach`-rail invoice also requires the receiver's country to be eligible for that rail.
+
+Save the quote's `id`, then execute the payout the normal way:
 
 ```bash [cURL]
 curl --request POST \

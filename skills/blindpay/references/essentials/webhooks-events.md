@@ -49,8 +49,8 @@ Every webhook endpoint you register receives events from the catalog below, unle
 | Event | Fires when |
 | --- | --- |
 | `payout.new` | A payout is created and the source funds have been captured |
-| `payout.update` | The payout advances through an intermediate step, such as document checks, manual review, or the bank send |
-| `payout.complete` | The payout finishes: confirmed at the destination, refunded, or failed |
+| `payout.update` | The payout advances through an intermediate step, such as document checks, manual review, the bank send, or reaching `failed` |
+| `payout.complete` | The payout finishes successfully: confirmed at the destination, or refunded. A `failed` payout fires `payout.update`, not `payout.complete`. |
 
 ## Virtual account
 
@@ -64,6 +64,7 @@ Every webhook endpoint you register receives events from the catalog below, unle
 | Event | Fires when |
 | --- | --- |
 | `transfer.new` | A stablecoin [transfer](../wallets/send.md) is created |
+| `transfer.update` | The transfer advances through an intermediate step (for example, a cross-chain burn confirmation), or fails to confirm |
 | `transfer.complete` | The transfer confirms on-chain |
 
 ## Wallet
@@ -79,6 +80,16 @@ Every webhook endpoint you register receives events from the catalog below, unle
 | --- | --- |
 | `limitIncrease.new` | A customer requests a transaction limit increase |
 | `limitIncrease.update` | BlindPay's compliance review approves or rejects the request |
+
+## Payable
+
+| Event | Fires when |
+| --- | --- |
+| `payable.new` | A payable (bill) is registered as a draft |
+| `payable.update` | The bill changes: a payout claims it (`processing`), the attempt fails or is refunded (back to `draft`), or a draft is deleted (`canceled`) |
+| `payable.complete` | The payout executing the payable finishes and the bill is paid |
+
+See [Payables](../payables/payables.md#webhooks) for the full payload shape.
 
 **Abstracted flavor (bank-rails framing, fiat-first API surface)**
 
@@ -142,11 +153,6 @@ Every payload includes a `webhook_event` field set to the event name, followed b
     "step": "completed",
     "transaction_hash": "0x0000000000000000000000000000000000000000000000000000000000000",
     "completed_at": "2026-06-01T11:59:00.000Z"
-  },
-  "tracking_partner_fee": {
-    "step": "on_hold",
-    "transaction_hash": null,
-    "completed_at": null
   }
 }
 ```
@@ -157,4 +163,5 @@ Every payload includes a `webhook_event` field set to the event name, followed b
 - [Webhooks verification](webhooks-verification.md): verify the signature headers on every call
 - [Payins](../payins/payins.md): the payin lifecycle behind `payin.*` events
 - [Payouts](../payouts/payouts.md): the payout lifecycle behind `payout.*` events
-- [Partner fees](partner-fees.md): how `tracking_partner_fee` is tracked on quotes and transactions
+- [Payables](../payables/payables.md): the bill lifecycle behind `payable.*` events
+- [Partner fees](partner-fees.md): how partner fee events relate to quotes and transactions

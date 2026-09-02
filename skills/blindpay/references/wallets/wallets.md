@@ -44,7 +44,15 @@ Stellar and Tron are not currently supported for managed wallets. Create a [bloc
 2. Create a development instance (see essentials/instances.md)
 3. Create your API key (see essentials/api-keys.md)
 
-A customer must exist and have `kyc_status: "approved"` before you can create a wallet for them. A customer can hold up to 10 wallets.
+A customer must exist and have `kyc_status` of `approved`, `approved_rfi`, or `compliance_request` before you can create a wallet for them. A customer can hold up to 10 wallets.
+
+**Note:**
+
+A customer in `compliance_request` can still create and use a managed wallet, and can still move funds already held in one (transfers, balance checks). Fiat rails stay gated: payin and payout quotes require `approved` or `approved_rfi`, so a `compliance_request` customer can't bring new fiat in or out until the open [RFI](../essentials/rfi.md) is resolved.
+
+**Note:**
+
+Managed wallets are gated by the `wallets_and_transfers` subscription feature on your instance. Every wallet endpoint (create, get, list, balance, delete) returns `400 wallets_and_transfers_not_enabled` if it isn't turned on. Contact BlindPay to enable it.
 
 ## Create a managed wallet
 
@@ -134,6 +142,16 @@ curl --request GET \
   --url https://api.blindpay.com/v1/instances/in_000000000000/customers/re_000000000000/wallets/bl_000000000000/balance \
   --header 'Authorization: Bearer YOUR_API_KEY'
 ```
+
+```json
+{
+  "USDC": { "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "id": "usdc", "symbol": "USDC", "amount": 100 },
+  "USDT": { "address": null, "id": null, "symbol": "USDT", "amount": 0 },
+  "USDB": { "address": null, "id": null, "symbol": "USDB", "amount": 0 }
+}
+```
+
+The response always includes all three tokens; one the wallet doesn't hold comes back with `amount: 0`.
 
 ## Receive payments into it
 

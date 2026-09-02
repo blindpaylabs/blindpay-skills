@@ -25,7 +25,7 @@ Every transfer follows the same two-step flow as a payin or payout: create a quo
 - **Destination**: another managed wallet's address, or any external blockchain address the receiver controls
 - **Token and network**: must be identical on both sides, except a USDC transfer can cross chains via Circle CCTP v2 (Ethereum, Polygon, Base, Arbitrum)
 
-Transfer quotes are consumed the same way payin and payout quotes are: create one, then execute against its ID before it expires. Because there is no fiat conversion involved, the quote step exists mainly to lock in the amount and destination, not to price an exchange rate. The transfer quote expires in 15 seconds, the shortest of any BlindPay quote.
+Transfer quotes are consumed the same way payin and payout quotes are: create one, then execute against its ID before it expires. Because there is no fiat conversion involved, the quote step exists mainly to lock in the amount and destination, not to price an exchange rate. The transfer quote expires 5 minutes after creation, the same window as payin and payout quotes.
 
 ## In this section
 

@@ -18,6 +18,10 @@ For compliance and regulatory requirements, every customer on your platform must
 
 Set `type` (`individual` or `business`) and `kyc_type` (`standard` or `enhanced`) when you create the customer. Individuals from high-risk countries must use `enhanced`; `standard` is rejected for them. Businesses only have one tier, KYB Standard; there is no enhanced KYB. See the [API reference](https://api.blindpay.com/reference#tag/customers) for the complete field list.
 
+**Note:**
+
+Existing customers can also carry `kyc_type: light`, a legacy tier BlindPay no longer issues. Creating a customer with `kyc_type: "light"` is always rejected, for both `individual` and `business`. `light` customers are blocked from ACH, wire, and RTP bank accounts.
+
 ## Required fields
 
 Fields marked optional below are not required to create the customer, but missing them can slow down manual review.
@@ -75,6 +79,9 @@ Every customer has a `kyc_status` indicating the current state of its verificati
 | `verifying` | KYC is being processed. This is the status on creation. |
 | `approved` | KYC verified and approved. |
 | `rejected` | KYC rejected (final). |
+| `deprecated` | A legacy status from before the receivers-to-customers migration. Not set on customers created going forward. |
+| `pending_review` | An Enhanced KYC customer was approved by BlindPay's identity vendor but is held for manual compliance review before the final decision. The customer can't transact yet. |
+| `awaiting_contract` | A legacy status kept only for backward compatibility with older records. Not set on new customers. |
 | `compliance_request` | The compliance team opened a Request for Information (RFI) and is waiting on additional documents or clarification. The customer is paused. See [Requests for information](#requests-for-information). |
 | `approved_rfi` | The customer is approved and fully operational, but the compliance team opened an RFI they still need to answer. See [Approved with an open RFI](#approved-with-an-open-rfi). |
 
@@ -240,7 +247,13 @@ curl --request GET \
   --header 'Authorization: Bearer YOUR_API_KEY'
 ```
 
-Returns the open RFI, or `404` if none is open for this customer:
+Returns the open RFI. If none is open for this customer, the response is `200` with a body of `null`, not a `404`:
+
+```json
+null
+```
+
+Otherwise:
 
 ```json
 {

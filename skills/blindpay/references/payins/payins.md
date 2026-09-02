@@ -30,12 +30,21 @@ On development instances every payin completes automatically about 30 seconds af
 | --- | --- | --- |
 | `ach` | USD | `memo_code` + `blindpay_bank_details` |
 | `wire` | USD | `memo_code` + `blindpay_bank_details` |
+| `rtp` | USD | `memo_code` + `blindpay_bank_details` (always the memo-code path, even with a virtual account) |
+| `international_swift` | USD | `blindpay_bank_details` (requires an approved virtual account, see below) |
 | `pix` | BRL | `pix_code` (copyable text or QR code) |
+| `ted` | BRL | `memo_code` + `blindpay_bank_details` (requires the `ted_payin` subscription feature, see below) |
 | `spei` | MXN | CLABE number |
 | `transfers` | ARS | CBU number |
 | `pse` | COP | payment link |
 
 For `ach`/`wire`, the memo code is shown only when the customer has no enabled virtual account; with one, BlindPay displays dedicated account details instead and ignores the memo code. See [virtual accounts](../virtual-accounts/virtual-accounts.md).
+
+`rtp` is the exception: no virtual account carries an RTP rail, so an `rtp` payin always shows the shared memo-code account, even when the customer has an approved virtual account for `ach`/`wire`.
+
+`international_swift` payins are only available to receivers with an approved virtual account; there is no memo-code fallback for SWIFT.
+
+`ted` is a Brazilian wire-style rail, gated behind the `ted_payin` subscription feature. Creating a `ted` payin without it enabled fails with 400. Contact BlindPay to enable it for your instance.
 
 ## Cover fees
 
@@ -147,18 +156,18 @@ The response carries the payment instructions for whichever `payment_method` was
   "billing_fee_amount": null,
   "transaction_fee_amount": 100,
   "blindpay_bank_details": {
-    "routing_number": "121145349",
-    "account_number": "621327727210181",
+    "routing_number": "021000089",
+    "account_number": "31254097",
     "account_type": "Business checking",
     "beneficiary": {
-      "name": "BlindPay, Inc.",
-      "address_line_1": "8 The Green, #19364",
-      "address_line_2": "Dover, DE 19901"
+      "name": "Example Beneficiary, Inc.",
+      "address_line_1": "1160 Battery St. East, Suite 100",
+      "address_line_2": "San Francisco, CA 94111"
     },
     "receiving_bank": {
       "name": "Example Bank, N.A.",
-      "address_line_1": "1 Letterman Drive, Building A, Suite A4-700",
-      "address_line_2": "San Francisco, CA 94129"
+      "address_line_1": "399 Park Avenue",
+      "address_line_2": "New York, NY 10043"
     }
   },
   "tracking_transaction": { "step": "processing" },
@@ -167,6 +176,18 @@ The response carries the payment instructions for whichever `payment_method` was
   "tracking_partner_fee": { "step": "on_hold" }
 }
 ```
+
+`blindpay_bank_details` is derived from which funding path the payin uses, and only one of these ever applies at once:
+
+| Condition | `blindpay_bank_details` shows |
+| --- | --- |
+| `memo_code` is set (no approved virtual account) | BlindPay's shared memo-code account, shown above |
+| Customer has an approved virtual account | That virtual account's own dedicated routing and account number |
+| Neither (fallback) | BlindPay's default account (routing `121145349`, beneficiary BlindPay, Inc.) |
+
+Read `blindpay_bank_details` together with whether `memo_code` is null to know which one you're getting.
+
+The virtual account behind `blindpay_bank_details` is the exact one the deposit landed on. For payins created before an instance supported multiple virtual accounts per customer, BlindPay falls back to the customer's oldest approved virtual account, which is safe since that era only ever allowed one.
 
 **Advanced flavor (stablecoin and blockchain mechanics)**
 
@@ -180,14 +201,19 @@ The response carries the payment instructions for whichever `payment_method` was
 | --- | --- | --- |
 | `ach` | `memo_code` plus BlindPay's bank details, so the deposit can be matched to this payin | `memo_code`, `blindpay_bank_details` |
 | `wire` | Same as `ach` | `memo_code`, `blindpay_bank_details` |
+| `rtp` | Same as `ach`, always | `memo_code`, `blindpay_bank_details` |
+| `international_swift` | BlindPay's bank details, SWIFT-routed | `blindpay_bank_details` |
 | `pix` | The Pix code as copyable text or a QR code | `pix_code` |
+| `ted` | Same as `ach` | `memo_code`, `blindpay_bank_details` |
 | `spei` | The CLABE number | `clabe` |
 | `transfers` | The account number (CVU, CBU, or Alias, see `type`) | `tracking_transaction.transfers_instruction.account`, `tracking_transaction.transfers_instruction.type` |
 | `pse` | The payment link | `tracking_transaction.pse_instruction.payment_link` |
 
 **Note:**
 
-If the customer has an approved [virtual account](../virtual-accounts/virtual-accounts.md), BlindPay displays their own dedicated account details instead, and `memo_code` is ignored even though the field is still returned. This applies to `ach`, `wire`, and `rtp`.
+If the customer has an approved [virtual account](../virtual-accounts/virtual-accounts.md), BlindPay displays their own dedicated account details instead, and `memo_code` is ignored even though the field is still returned. This applies to `ach` and `wire`.
+
+`rtp` is the exception: no virtual account carries an RTP rail, so an `rtp` payin always uses the shared memo-code account, even when the customer has an approved virtual account for `ach`/`wire`. `international_swift` requires an approved virtual account and has no memo-code fallback at all.
 
 **Advanced flavor (stablecoin and blockchain mechanics)**
 
@@ -230,6 +256,8 @@ curl https://api.blindpay.com/v1/instances/in_000000000000/payin-quotes \
 
 Creating the payin from that quote triggers the pull automatically; there is no `memo_code` or `blindpay_bank_details` for the payer to act on, and no manual transfer for BlindPay to wait for. If the pull cannot be initiated, the payin fails immediately with `PAYINS_FUNDING_PULL_FAILED` instead of sitting in `processing`.
 
+BlindPay's ACH-pull provider charges a flat **$1.00** fee on every pull, deducted from the amount actually pulled: the payer's connected account is debited the quote's `sender_amount` (which already includes the fee), but the pull only moves `sender_amount` minus $1.00.
+
 **Note:**
 
 Omit `funding_bank_account_id` to keep the default manual bank transfer flow described above.
@@ -248,12 +276,21 @@ On development instances every payin auto-completes about 30 seconds after creat
 | --- | --- | --- |
 | `ach` | USD | up to 5 business days |
 | `wire` | USD | up to 5 business days |
-| `pix` | BRL | up to 5 minutes |
-| `spei` | MXN | up to 10 minutes |
-| `transfers` | ARS | up to 10 minutes |
-| `pse` | COP | up to 10 minutes |
+| `pix` | BRL | typically settles within minutes; BlindPay waits up to 30 minutes before marking a non-OTC `pix` payin `failed` (with a reconciliation check first). OTC `pix` payins wait until the [18:50 BRT cutoff](../kb/cut-off-times.md) instead |
+| `ted` | BRL | up to 7 days (covers a Friday cut-off with next-week reconciliation) |
+| `spei` | MXN | typically settles within minutes; BlindPay waits up to 30 minutes before marking the payin `failed` |
+| `transfers` | ARS | typically settles within minutes; BlindPay waits up to 30 minutes before marking the payin `failed` |
+| `pse` | COP | typically settles within minutes; BlindPay waits up to 30 minutes before marking the payin `failed`, since PSE's bank redirect and 2FA step can lag |
 
 See [cut-off times](../kb/cut-off-times.md) for the full settlement-window reference.
+
+**Note:**
+
+If an OTC `pix` payin fails because the deposit never arrives, a flat $100.00 penalty is added to the quote's billing fee.
+
+**Note:**
+
+If the funding for a `transfers` payin arrives after it was already marked `failed`, and no stablecoins were sent yet, BlindPay automatically revives it back to `processing` and completes the transfer once it matches the sender's tax id and amount.
 
 ## Status lifecycle
 
@@ -265,7 +302,23 @@ See [cut-off times](../kb/cut-off-times.md) for the full settlement-window refer
 | `failed` | The payin did not go through | yes |
 | `refunded` | The deposit was returned to the sender | yes |
 
-Each `tracking_*` object on the payin (`tracking_transaction`, `tracking_payment`, `tracking_complete`, `tracking_partner_fee`) exposes a finer-grained `step` (`processing`, `on_hold`, `pending_review`, `completed`) for the corresponding stage, useful for building a detailed status view.
+Each `tracking_*` object on the payin (`tracking_transaction`, `tracking_payment`, `tracking_complete`, `tracking_partner_fee`) exposes a finer-grained `step` for the corresponding stage, useful for building a detailed status view:
+
+| `step` | Meaning |
+| --- | --- |
+| `processing` | The stage is in progress |
+| `on_hold` | Waiting to start, or held |
+| `pending_review` | Held for manual review |
+| `pending_refund_review` | A refund on this stage is pending manual review |
+| `completed` | The stage finished |
+
+Each `tracking_*` object also has its own `completed_at` timestamp, set once its `step` reaches `completed`.
+
+`tracking_transaction` also carries its own `status` field, separate from `step`: `null` while the fiat leg is still pending, then `failed` or `completed` once it resolves. Don't confuse it with the payin's top-level `status`. It also carries `provider_name`, identifying the banking partner that processed the fiat leg for that rail.
+
+**Note:**
+
+If fees consume the entire amount and `receiver_amount` resolves to 0, the payin reaches `completed` immediately without an on-chain transfer, since a $0.00 transfer would be rejected by every chain. This is a rare edge case; virtual-account deposits are fee-capped so they always deliver at least $0.01, see [Fees on deposits](../virtual-accounts/virtual-accounts.md#fees-on-deposits).
 
 **Abstracted flavor (bank-rails framing, fiat-first API surface)**
 
@@ -278,6 +331,66 @@ If a payin lands on-chain but the broadcast hash was replaced (for example durin
 **Warning:**
 
 If the on-chain delivery transaction gets replaced (for example during a gas spike), BlindPay automatically resolves the transaction that actually landed and re-broadcasts if needed. The `transaction_hash` you eventually see in `tracking_complete` may differ from the one you initially observed being broadcast; treat `status` as the source of truth, not a specific hash.
+
+## Retrieve a payin
+
+**Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
+
+```bash [cURL]
+curl https://api.blindpay.com/v1/instances/in_000000000000/payins/pi_000000000000 \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+The full response carries more fields than the create-payin example above:
+
+| Field | Notes |
+| --- | --- |
+| `token`, `network` | Destination stablecoin and chain, from the payin quote's wallet |
+| `is_otc` | Whether the underlying quote was OTC |
+| `currency` | The fiat currency of `sender_amount` |
+| `commercial_quotation`, `blindpay_quotation` | Exchange rates locked at quote time |
+| `total_fee_amount` | Sum of the fee fields |
+| `first_name`, `last_name`, `legal_name`, `image_url`, `type` | The customer the payin belongs to |
+| `pse_payment_link`, `pse_full_name`, `pse_tax_id`, `pse_document_type` | Set only for `pse` payins |
+| `payer_rules` | The allowlist/instructions set on the quote |
+| `manual_execution_status`, `manual_concluded_at`, `manual_concluded_by` | Set only for OTC payins routed to manual liquidity |
+
+## List payins
+
+**Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
+
+```bash [cURL]
+curl --url 'https://api.blindpay.com/v1/instances/in_000000000000/payins?status=processing&limit=10' \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+| Query param | Notes |
+| --- | --- |
+| `customer_id` | Filter to one customer |
+| `status` | One of the [status](#status-lifecycle) values |
+| `customer_name` | Matches the customer's first + last name or legal name (partial match) |
+| `bank_account_id` | Filter to payins whose funding pull used this bank account |
+| `country` | ISO country code |
+| `payment_method` | One of the [payment methods](#payment-methods) |
+| `network` | Destination blockchain network |
+| `token` | Destination stablecoin |
+| `limit`, `starting_after`, `ending_before` | Cursor pagination |
+
+Combine any of the filters above; they're ANDed together.
+
+**Warning:**
+
+If you pass none of `limit`, `starting_after`, or `ending_before`, the endpoint returns the full unpaginated array of matching payins instead of a `{ data, pagination }` envelope. Pass at least `limit` to get the paginated shape.
+
+## Track a payin externally
+
+`GET /e/payins/{id}` returns the same payin fields as [Retrieve a payin](#retrieve-a-payin), but requires no API key: anyone with the payin id can call it. Use it to power a public tracking page or a receipt for the payer, who never has an API key of their own.
+
+```bash [cURL]
+curl https://api.blindpay.com/v1/e/payins/pi_000000000000
+```
+
+The following fields are always removed from the response, even though they exist on the authenticated payin object: `id_doc_front_file`, `id_doc_back_file`, `selfie_file`, `proof_of_address_doc_file`, `source_of_funds_doc_file`, `incorporation_doc_file`, `proof_of_ownership_doc_file`, `transaction_document_file`, `transaction_document_id`, `aiprise_validation_key`, `kyc_warnings`, `signed_transaction`, `ip_address`. Every other field, including the receiver's name, tax id, and address, is returned unmodified since the tracking page needs them.
 
 ## Testing
 
@@ -294,6 +407,10 @@ On development instances every payin auto-completes about 30 seconds after creat
 | `66600` ($666.00) | `failed` |
 | `77700` ($777.00) | `refunded` |
 | any other amount | `completed` after the normal ~30 second delay |
+
+**Note:**
+
+On development instances, the payment instructions returned for `pix` (`pix_code`) and for the memo-code rails (`memo_code`) are the literal placeholder string `<development>`, not a real, scannable, or payable value. BlindPay never calls the payment provider in development. Test the real payer flow against a production instance.
 
 ## Webhooks
 
@@ -316,6 +433,10 @@ See [webhooks](../essentials/webhooks.md) for signature verification and payload
 | `payin.complete` | The payin reaches `completed`, meaning stablecoins were delivered to the destination wallet |
 
 See [webhooks](../essentials/webhooks.md) for signature verification and full payload details.
+
+**Note:**
+
+On production instances with email notifications enabled, creating a `pix` payin also sends the receiver an automatic "Onramp Initiated" email with the payin id and the Pix code. Disable this from the dashboard if you handle payer notifications yourself.
 
 ## Related
 

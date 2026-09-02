@@ -6,7 +6,7 @@ Source: https://blindpay.com/docs/kb/information-requests
 
 ## Summary
 
-A Request for Information (RFI) is how BlindPay's compliance team asks for missing or clarifying details when a customer's KYC or KYB review is incomplete. Instead of rejecting outright, BlindPay puts the customer on hold in `compliance_request` status, emails your team, and gives you 27 days to collect and submit the requested documents or explanations from your customer. This guide is the operational walkthrough; to handle RFIs programmatically, see the [RFI API documentation](information-requests.md).
+A Request for Information (RFI) is how BlindPay's compliance team asks for missing or clarifying details when a customer's KYC or KYB review is incomplete. Instead of rejecting outright, BlindPay puts the customer on hold in `compliance_request` status, emails your team, and gives you 27 days to collect and submit the requested documents or explanations from your customer. This guide is the operational walkthrough; to handle RFIs programmatically, see the [RFI API documentation](../essentials/rfi.md).
 
 ## When an RFI is created
 
@@ -49,7 +49,7 @@ All emails come from `compliance@blindpay.com` and link to your dashboard at `ap
 
 **Note:**
 
-Emails are sent to every non-deleted user in your instance. To control who receives them, manage your team's membership in **Settings → Members**.
+Emails are sent to every non-deleted user in your instance. To control who receives them, manage your team's membership in **Settings → Members**, or set a dedicated compliance address list in **Settings → Team → Compliance**: once you add addresses there, RFI emails go only to that list instead of every team member. You can also turn customer RFI emails off entirely from the same page; instance-level RFI emails are unaffected and always send.
 
 ## Responding to an RFI
 
@@ -94,5 +94,5 @@ If 27 days pass without a submission, BlindPay automatically rejects the custome
 
 ## Related
 
-- [RFI API documentation](information-requests.md) · [Customer statuses](kyc.md#statuses)
+- [RFI API documentation](../essentials/rfi.md) · [Customer statuses](kyc.md#statuses)
 - [Basic Customer Information (KYC)](kyc-basics.md) · [Basic Business Information (KYB)](kyb-documents.md)

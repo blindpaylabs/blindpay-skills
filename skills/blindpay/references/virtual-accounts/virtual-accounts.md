@@ -48,6 +48,10 @@ After a virtual account is created via the API, it goes through a two-stage revi
 
 Issuance SLAs vary by account type, see the table above. Approval is not guaranteed at either stage: both BlindPay's compliance team and the banking partner reserve the right to reject an application. On a development instance, virtual accounts skip both stages and are created directly in `approved` status.
 
+**Note:**
+
+On a development instance, `routing_number` and `account_number` are not real bank numbers. `routing_number` is always `110000000`, and `account_number` is a fake 12-digit number derived from the virtual account's `id`, so the same account always gets the same number across requests and across the `ach`, `wire`, and `rtp` rails. No real bank recognizes either value; they exist so you can build and test webhook handling before switching to production. Production accounts get real, bank-issued routing and account numbers instead.
+
 ### Statuses
 
 | Status | Description |
@@ -59,7 +63,7 @@ Issuance SLAs vary by account type, see the table above. Approval is not guarant
 
 **Warning:**
 
-A customer can't have two non-deleted virtual accounts of the same type unless the earlier one was `rejected`. Create a new customer, or wait for the rejection, before retrying that type.
+A customer can't have two non-deleted, non-rejected virtual accounts on the same `banking_partner`, with one exception: on `jpmorgan`, a customer can hold multiple virtual accounts at once, since each corresponds to a separate sub-account with BlindPay's banking partner. For every other banking partner, create a new customer, delete the existing account, or wait for a rejection before retrying.
 
 ## Frequently asked questions
 

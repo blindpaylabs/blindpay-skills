@@ -14,7 +14,7 @@ Transfers are in beta. `customer_token` must always match `sender_token`, there 
 
 - **Source**: a managed wallet (`wallet_id`, `bl_...`) that holds the stablecoin balance. This is the only supported source, unlike payouts, which can also draw from an external blockchain wallet.
 - **Destination**: any blockchain address, `customer_wallet_address`, normally on the same network as the source wallet; a USDC transfer can target a different [CCTP v2 network](#cross-chain-usdc-transfers-circle-cctp-v2) instead. It does not need to belong to a BlindPay customer or wallet, it can be any address the recipient controls.
-- **Expiry is very short**. A transfer quote is meant to be executed immediately after creation, not held for later use. Read `expires_at` from the response rather than assuming a fixed window, and call [create a transfer](transfers.md) right after creating the quote.
+- **Expiry is 5 minutes**, fixed and not configurable. A transfer quote is meant to be executed immediately after creation, not held for later use: call [create a transfer](transfers.md) right after creating the quote, and request a new one if `expires_at` passes.
 
 **Note:**
 
@@ -28,7 +28,7 @@ Supported networks are Ethereum, Polygon, Base, and Arbitrum on a production ins
 
 The quote itself is unaffected by the bridge: amounts stay 1:1 and BlindPay adds no fee on top, exactly like a same-network transfer. Circle's protocol deducts its own small fee (typically a fraction of a cent up to a few cents, a few basis points of the amount) from the amount minted on the destination chain; this is not reflected in `receiver_amount` or any other quote field. Cross-chain transfers typically settle in 8 to 20 seconds; transfers sourced from Polygon settle in around 8 seconds either way.
 
-Solana, Stellar, and Tron are not part of cross-chain transfers yet; same-network moves on those chains are unaffected.
+Solana, Stellar, Tron, and Tempo are not part of cross-chain transfers yet; same-network moves on those chains are unaffected.
 
 ## Prerequisites
 
@@ -38,7 +38,9 @@ Solana, Stellar, and Tron are not part of cross-chain transfers yet; same-networ
 2. Create a development instance (see essentials/instances.md)
 3. Create your API key (see essentials/api-keys.md)
 
-You also need a [customer](../kb/kyc.md) with `kyc_status: "approved"` and a [managed wallet](wallets.md) holding the stablecoin balance you want to move.
+You also need a [customer](../kb/kyc.md) whose `kyc_status` is `approved`, `approved_rfi`, or `compliance_request`, and a [managed wallet](wallets.md) holding the stablecoin balance you want to move. This is wider than payins and payouts, which require `approved` or `approved_rfi` only: a customer paused by an open RFI (`compliance_request`) can still move funds already sitting in their managed wallet through a transfer, even though creating a new payin or payout for them stays blocked until the RFI is resolved. Any other `kyc_status` fails with `400` `kyc_not_approved`.
+
+Creating a transfer quote also requires the caller to hold the transaction-create permission on the instance. Dashboard roles that have it: `owner`, `admin`, `finance`, `checker`, and `operations`. A caller without it gets a `403` `user_not_allowed` before `wallet_id` or any other field is checked.
 
 ## Request fields
 
@@ -50,9 +52,20 @@ You also need a [customer](../kb/kyc.md) with `kyc_status: "approved"` and a [ma
 | `sender_token` | enum | yes | `USDC`, `USDT`, or `USDB`. Must be a token allowed on the source wallet's network. |
 | `customer_token` | enum | yes | Must equal `sender_token`. |
 | `customer_network` | enum | yes | Must equal the source wallet's own network, unless `sender_token` and `customer_token` are both `USDC` and the pair is a [supported CCTP v2 route](#cross-chain-usdc-transfers-circle-cctp-v2). |
-| `customer_wallet_address` | string | yes | The destination blockchain address, 32 to 64 characters, validated for the target network. Can be another wallet you created or any external address. |
+| `customer_wallet_address` | string | yes | The destination blockchain address, 32 to 64 characters, validated for the target network (see table below). Can be another wallet you created or any external address. |
 | `cover_fees` | boolean | yes | Accepted for API consistency with payin and payout quotes, but fee math is not yet active for transfers: `sender_amount` and `receiver_amount` are always equal to `request_amount`. |
 | `partner_fee_id` | string (`pf_...`) | no | Accepted, but partner fee amounts are not yet computed for transfers. |
+
+Address format by network family:
+
+| Network family | Format | Example |
+| --- | --- | --- |
+| EVM (`ethereum`, `polygon`, `base`, `arbitrum`, `tempo`, and their testnets) | `0x` + 40 hex characters (42 total) | `0xDD6a3aD0949396e57C7738ba8FC1A46A5a1C372` |
+| `stellar`, `stellar_testnet` | `G` + 55 base32 characters (56 total) | `GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` |
+| `solana`, `solana_devnet` | base58, 32 to 44 characters | `11111111111111111111111111111111111111111` |
+| `tron` | `T` + 33 base58 characters (34 total) | `TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA` |
+
+An address that doesn't match the format for `customer_network` fails with `VALIDATION_FAILED` and a message naming the field: `Invalid wallet address for network {network}`.
 
 **Note:**
 
@@ -138,7 +151,7 @@ The `qu_` prefix is shared across payin quotes, payout quotes, and transfer quot
 
 ## Validation order
 
-The API checks, in this order: the caller has permission to create transactions, the wallet exists and belongs to your instance. If `customer_network` differs from the source wallet's network, the API requires both `sender_token` and `customer_token` to be `USDC` (`cross_chain_transfers_only_support_usdc` otherwise) and the network pair to be a [supported CCTP v2 route](#cross-chain-usdc-transfers-circle-cctp-v2) (`cctp_route_not_supported` otherwise). If `customer_network` matches the source wallet's network, the API instead checks that the token and network are allowed for your instance type, that USDT is only used on Polygon, and that `sender_token` matches `customer_token`. Either path finishes with a check that the receiving customer's KYC is approved. The first failing check is the one returned.
+The API checks, in this order: the caller has permission to create transactions, the wallet exists and belongs to your instance. If `customer_network` differs from the source wallet's network, the API requires both `sender_token` and `customer_token` to be `USDC` (`cross_chain_transfers_only_support_usdc` otherwise) and the network pair to be a [supported CCTP v2 route](#cross-chain-usdc-transfers-circle-cctp-v2) (`cctp_route_not_supported` otherwise). If `customer_network` matches the source wallet's network, the API instead checks that the token and network are allowed for your instance type, that USDT is only used on Polygon, and that `sender_token` matches `customer_token`. Either path finishes with a check that the receiving customer's `kyc_status` is one of `approved`, `approved_rfi`, or `compliance_request`. The first failing check is the one returned.
 
 ## Testing
 

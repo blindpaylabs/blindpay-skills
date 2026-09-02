@@ -1,6 +1,6 @@
 # Payment methods
 
-Every bank transfer rail BlindPay supports, by country and currency: ACH, wire, RTP, SWIFT, Pix, SPEI, PSE, Transfers, and SEPA.
+Every bank transfer rail BlindPay supports, by country and currency: ACH, wire, RTP, SWIFT, Pix, PIX Safe, TED, SPEI, PSE, Transfers, and SEPA.
 
 Source: https://blindpay.com/docs/kb/payment-methods
 
@@ -13,6 +13,8 @@ BlindPay supports bank transfers over local rails in the US, Brazil, Mexico, Col
 | Domestic Wire | 🇺🇸 United States | USD | Receive + send |
 | RTP | 🇺🇸 United States | USD | Receive + send |
 | Pix | 🇧🇷 Brazil | BRL | Receive + send |
+| PIX Safe | 🇧🇷 Brazil | BRL | Send |
+| TED | 🇧🇷 Brazil | BRL | Receive + send |
 | SPEI | 🇲🇽 Mexico | MXN | Receive + send |
 | PSE | 🇨🇴 Colombia | COP | Receive |
 | ACH Colombia | 🇨🇴 Colombia | COP | Send |
@@ -22,6 +24,14 @@ BlindPay supports bank transfers over local rails in the US, Brazil, Mexico, Col
 **Note:**
 
 On the receive side, US payments arrive either into a customer's own [virtual account](../virtual-accounts/virtual-accounts.md) or into BlindPay's bank details with a `memo_code`. Alternatively, an ACH payin can pull the funds directly from a bank account the customer connected through [Plaid](../payouts/bank-accounts.md#connect-with-plaid), skipping the manual transfer entirely; see [Payins](../payins/payins.md#pull-funding-from-a-plaid-connected-account).
+
+**Note:**
+
+Receiving `ted` payins requires the `ted_payin` subscription feature on your instance. Creating a `ted` payin quote without it fails with `PAYINS_METHOD_NOT_SUPPORTED`. Contact BlindPay to enable it. `pix_safe` is a payout-only bank account type; it isn't a payin `payment_method`.
+
+## Fetch rails dynamically
+
+The table above is also available at runtime from `GET /available/rails` (no API key required). Each entry is `{ label, value, country }`; `country` is a display hint for the rail picker's flag icon, not a claim that BlindPay has a rail in that country (SEPA, for example, surfaces `DE` as its default flag).
 
 ## SEPA destinations
 
@@ -33,9 +43,13 @@ Albania, Andorra, Austria, Belgium, Bulgaria, Croatia, Cyprus, Czechia, Denmark,
 
 SEPA payouts to Austria, Estonia, Finland, France, Lithuania, Norway, and Portugal are currently limited to individual beneficiaries (`account_class: individual`).
 
+**Note:**
+
+SEPA payouts settle through BlindPay's banking partner network. The crypto leg always runs on Polygon, regardless of which network you funded the payout from; this doesn't change what you send to the API, but can affect the on-chain timing you observe.
+
 ## Settlement and cut-offs
 
-How fast each rail settles, and the daily cut-offs for ACH, wire, and SWIFT, are covered in [Cut-off times](cut-off-times.md). As a rule of thumb: Pix, SPEI, and Transfers settle in minutes; RTP is instant; ACH, wire, ACH Colombia, and SEPA take about 1-2 business days; SWIFT can take up to 5 business days.
+How fast each rail settles, and the daily cut-offs for ACH, wire, and SWIFT, are covered in [Cut-off times](cut-off-times.md). As a rule of thumb: Pix, PIX Safe, SPEI, and Transfers settle in minutes; RTP is instant; ACH, wire, TED, ACH Colombia, and SEPA take about 1-2 business days; SWIFT can take up to 5 business days.
 
 ## Related
 

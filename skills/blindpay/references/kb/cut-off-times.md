@@ -21,14 +21,30 @@ The cut-off and settlement windows below describe the underlying ACH, wire, and 
 
 For US payments, customers with an enabled [virtual account](../virtual-accounts/virtual-accounts.md) see their own account details displayed to the payer. Customers without a virtual account get a unique `memo_code` plus BlindPay's bank account details for the transaction. The memo code is ignored once a virtual account is approved.
 
-## Wire and SWIFT
+## Wire, SWIFT, and TED
 
 | Type | Cut-off (ET) | Estimated settlement |
 | --- | --- | --- |
 | Domestic wire | 3:00 PM | Same business day |
 | International SWIFT | 10:30 AM | Up to 5 business days |
+| TED (Brazil) | End of Brazilian banking day (local time) | Same banking day, or the next banking day if submitted after the cut-off, which can push settlement past a weekend or holiday |
 
-SWIFT payouts carry extra country-conditional required fields (a NAICS `business_industry` code for business accounts, a local `tax_id` for the beneficiary's country, and `phone_number` for certain countries). See [Pay out to bank](../payouts/payouts.md) for the full field list per country.
+ACH, wire, RTP, and SWIFT payouts all carry the same extra country-conditional required fields (a NAICS `business_industry` code for business accounts, a local `tax_id` for the beneficiary's country, and `phone_number` for certain countries), not just SWIFT. See [Bank accounts](../payouts/bank-accounts.md#compliance-fields-for-ach-wire-rtp-and-swift) for the full field list per country.
+
+## Boleto payables
+
+Boletos clear nationally on Brazilian banking days, 06:30 to 18:30 BRT. Outside that window, or on a non-banking day, the payout that pays the boleto is deferred to the next banking day instead of executing right away.
+
+| Payable amount | Same-day cutoff |
+| --- | --- |
+| Up to R$250,000 | 18:30 BRT |
+| Above R$250,000 | 14:30 BRT |
+
+A boleto quoted before 06:30 still pays the same day; the rail just hasn't opened yet. One quoted after its cutoff, or on a weekend or Brazilian bank holiday, is scheduled for the next banking day, so `payable.complete` and `payout.complete` land later than they would for PIX, which runs 24/7 and is unaffected by any of this.
+
+**Warning:**
+
+A boleto payout that lands on a compliance hold (see [Compliance holds](#compliance-holds) below) can wait up to 30 days before it releases. If the boleto's due date falls before the day the payment can then actually execute, requoting the same payable fails with `payable_boleto_would_be_overdue` rather than sending out a boleto that can no longer be paid. Don't assume a payable that quoted successfully days ago still can; requote close to execution instead of caching an old quote.
 
 ## Instant methods
 
@@ -37,6 +53,7 @@ These rails settle in minutes rather than business days, both for payins (money 
 | Method | Currency | Country | Payin arrival | Payout `type` value |
 | --- | --- | --- | --- | --- |
 | Pix | BRL | Brazil | Up to 5 minutes | `pix` |
+| PIX Safe | BRL | Brazil | Payout only | `pix_safe` |
 | SPEI (CLABE) | MXN | Mexico | Up to 10 minutes | `spei_bitso` |
 | Transfers (CBU) | ARS | Argentina | Up to 10 minutes | `transfers_bitso` |
 | PSE | COP | Colombia | Up to 10 minutes | (payin only; payout equivalent is `ach_cop_bitso`) |
@@ -46,6 +63,8 @@ These rails settle in minutes rather than business days, both for payins (money 
 On the payout side, `ach_cop_bitso` (Colombia) settles in around 1 business day, not instantly. High transaction volumes may affect estimated delivery times on any rail.
 
 In development, every payin auto-completes about 30 seconds after initiation, regardless of payment method.
+
+Pix payin quotes with `is_otc: true` (BRL-only, quote expires in 10 seconds; see [Quote expiry windows](#quote-expiry-windows)) also close out on a fixed daily cutoff rather than a rolling window: BlindPay waits for the deposit until 18:50 BRT (America/Sao_Paulo) the same day, or the next day if the quote was created after that time. This cutoff is also the expiration BlindPay sets on the Pix QR code itself.
 
 ## Currency minimums
 
@@ -62,7 +81,17 @@ Payin quotes enforce a minimum and maximum `request_amount` (minor units) per cu
 
 **Note:**
 
-Thresholds are enforced at quote-creation time and can change; treat the min/max as "varies by currency, the quote enforces it" rather than hardcoding these numbers in your integration. Payin methods without an approved virtual account (`ach`, `wire`) are additionally capped at $500,000 per transaction.
+Thresholds are enforced at quote-creation time and can change; treat the min/max as "varies by currency, the quote enforces it" rather than hardcoding these numbers in your integration. Payin methods without an approved virtual account (`ach`, `wire`) are additionally capped at $500,000 per transaction. `rtp` is capped the same way even when the receiver has an approved virtual account, since RTP always settles through BlindPay's memo-code account rather than the dedicated account.
+
+**Note:**
+
+The Maximum column above is a currency-level ceiling. The maximum that actually applies to a given payin quote is the **receiver's per-transaction limit** (see [KYC limits](kyc.md#limits)), which defaults to $10,000-$50,000 depending on their KYC tier and can be lower than the currency ceiling shown here. The `LIMITS_AMOUNT_OUT_OF_RANGE` error names the exact range that applied to your quote; read it rather than assuming the table above.
+
+**Note:**
+
+These minimums apply only to quotes you create through the API. Deposits into a [virtual account](../virtual-accounts/virtual-accounts.md) skip them entirely: any positive amount forms a payin, including a $0.01 account-verification micro-deposit.
+
+MXN, COP, and ARS payin quotes settle in whole currency units. A sender-denominated quote (`currency_type: "sender"`) with a `request_amount` that isn't a whole unit is rejected with `request_amount_must_be_a_whole_currency_unit`. A receiver-denominated quote (you specify the stablecoin amount and let BlindPay convert) has no such check on input, but the computed sender-side amount is truncated to the nearest whole unit before the deposit is registered, so the payer-facing amount can come out slightly lower than the FX conversion would otherwise produce.
 
 ## Quote expiry windows
 
@@ -109,7 +138,7 @@ Certain transactions or onboarding steps may be held for compliance review. Comm
 - Customers from high-risk countries (always routed to Enhanced KYC, manual review)
 - Open [requests for information](kyc.md) on a customer (status `compliance_request`, which cannot stack, only one RFI is open at a time)
 
-While a hold is open, the related customer, payin, payout, or virtual account stays in a pending or verifying state until compliance clears it. A payout can also land `on_hold` for manual review after crypto has already been collected from the sender; this applies to all USD ACH/Wire/RTP/SWIFT payouts, not only risk-flagged ones, and can take up to 30 days to resolve.
+While a hold is open, the related customer, payin, payout, or virtual account stays in a pending or verifying state until compliance clears it. A payin or payout can also land `on_hold` for manual review after the funds side has already been captured: for payouts, this applies to all USD ACH/Wire/RTP/SWIFT payouts, not only risk-flagged ones. Either can take up to 30 days to resolve: approval resumes the normal flow, and a timeout without a decision fails the transaction.
 
 ## Failed or refunded transactions
 

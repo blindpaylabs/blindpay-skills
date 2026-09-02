@@ -65,7 +65,7 @@ The `status` field on an RFI object reflects its lifecycle:
 
 | Method | Path                                                                  | Description                              |
 | ------ | --------------------------------------------------------------------- | ---------------------------------------- |
-| `GET`  | `/v1/instances/{instance_id}/customers/{customer_id}/rfi`             | Fetch the open (pending) RFI, or `404`.  |
+| `GET`  | `/v1/instances/{instance_id}/customers/{customer_id}/rfi`             | Fetch the open (pending) RFI, or `null` if none is open.  |
 | `POST` | `/v1/instances/{instance_id}/customers/{customer_id}/rfi`             | Submit the response as a flat object.    |
 
 ## Prerequisites
@@ -92,6 +92,17 @@ Subscribe to the [`customer.update` webhook](webhooks.md). When a customer enter
 }
 ```
 
+### Who receives RFI emails
+
+By default, every active team member on the instance also gets a customer RFI notification email. Two settings on the [instance](instances.md) change this, both updatable via `PUT /instances/{instance_id}`:
+
+| Setting | Effect |
+| --- | --- |
+| `compliance_emails` | Up to 20 addresses. When set, customer RFI emails go only to these addresses instead of every team member. |
+| `customer_rfi_emails_enabled` | Set to `false` to stop customer RFI emails entirely. Omit on update to leave it unchanged. |
+
+See [Requests for Information guide](../kb/information-requests.md#email-notifications) for the full email cadence.
+
 ## Fetch the open RFI
 
 **Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID, `re_000000000000` with your customer ID.
@@ -102,7 +113,13 @@ curl --request GET \
   --header 'Authorization: Bearer YOUR_SECRET_TOKEN'
 ```
 
-Returns the open RFI, or `404` if none is open for this customer:
+Returns the open RFI. If none is open for this customer, the response is `200` with a body of `null`, not a `404`:
+
+```json
+null
+```
+
+Otherwise:
 
 ```json
 {

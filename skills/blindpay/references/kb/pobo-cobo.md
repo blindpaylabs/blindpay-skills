@@ -96,6 +96,8 @@ Each rail exposes a different reference, and BlindPay returns only the ones the 
 - `provider_imad` is the Fed Input Message Accountability Data, and exists on domestic Fedwire payments only.
 - `provider_reference` is a bank-side reference captured from the account booking webhook. It appears on some ACH and domestic Wire payouts only. It is not the formal ACH network trace number and should not be handed to a bank as one.
 
+`provider_uetr`, `provider_imad`, and `provider_reference` are capped at 120 characters; `provider_clearing_system` at 40.
+
 ## What BlindPay Does Not Do
 
 Treasury teams who have run POBO through a corporate bank sometimes expect the ISO 20022 ultimate-party fields. BlindPay does not populate `UltmtDbtr` or `UltmtCdtr`. A payment carries two non-bank parties: the account being debited and the beneficiary. Your customer's identity reaches the payee through the account title (Named Account) and the payment reference, not through a separate ultimate-debtor tag.

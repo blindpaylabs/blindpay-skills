@@ -10,6 +10,10 @@ Analyze Document reads a PDF, JPG, or PNG with AI, checks it against the rules f
 
 The analysis is a signal, not a decision. It does not approve or reject KYC; the official outcome still comes from the verification flow.
 
+**Note:**
+
+On a development instance, the document is never actually analyzed. Every request returns `approval_rate: "high"` with the description `This is a development instance, all documents are good.`, regardless of what you upload. Test the real analysis, including low and medium ratings, on a production instance.
+
 ## Prerequisites
 
 **Before you start:**
@@ -37,6 +41,55 @@ Pass the `type` that matches the document. It selects the rule set used for the 
 | `tax_return`             | Tax return                                                 |
 | `invoice`                | Invoice                                                    |
 | `transaction_document`   | Transaction supporting document                            |
+| `pay_stub`               | Pay stub                                                    |
+| `employment_letter`      | Employment verification letter                              |
+| `investment`             | Investment / brokerage account statement                    |
+| `crypto_exchange`        | Crypto exchange statement                                    |
+| `blockchain_wallet`      | Blockchain wallet statement                                  |
+| `contract`               | Signed contract                                              |
+| `accounts_receivable`    | Accounts receivable aging report                             |
+| `merchant_processor`     | Merchant processor statement                                 |
+| `shareholder_loan`       | Shareholder loan agreement                                   |
+
+These last nine mirror the supporting document types used for [limit increase](limit-increase.md) requests.
+
+## Rating thresholds
+
+The rules behind each rating differ by document type. These four have explicit, documented thresholds:
+
+### `identity_document`
+
+| Rating | When |
+| --- | --- |
+| `high` | Not expired (or an expiry-less ID type), issued within the last 10 years, all required fields legible |
+| `medium` | Valid but expires within the next 3 months, or one field is hard to read |
+| `low` | Expired, illegible expiry on a type that has one, missing required fields, not a recognizable government ID, or signs of tampering |
+
+### `passport`
+
+| Rating | When |
+| --- | --- |
+| `high` | All required fields present and legible, expiry more than 6 months away, no tampering |
+| `medium` | Required fields present but expiry within the next 6 months, one field hard to read, or the MRZ is missing or partly illegible |
+| `low` | Expired, expiry cannot be determined, a required field (name, number, expiry) is missing, the document isn't recognizable as a passport, or it shows signs of tampering |
+
+### `proof_of_address`
+
+The document must be issued within the last 3 months. If it was issued earlier, or the issue date cannot be determined, the rating is `low` regardless of how complete or legible the document otherwise is.
+
+| Rating | When |
+| --- | --- |
+| `high` | Issued within 3 months, accepted issuer (utility bill, bank/credit card statement, government letter or tax document, residential lease), fully legible |
+| `medium` | Within the 3-month window, but a field is partially cut off or hard to read, or the issuer is plausible but not clearly identifiable |
+| `low` | Issued more than 3 months ago, issue date cannot be determined, or the issuer is not recognizable |
+
+### `selfie`
+
+| Rating | When |
+| --- | --- |
+| `high` | A single, well-lit, unobstructed face with eyes open, apparent live capture |
+| `medium` | A minor issue: partial obstruction, sunglasses, low light, or slight blur, but the face is still identifiable |
+| `low` | No discernible face, multiple faces, a photo of a screen or printout, a document instead of a face, or heavy filtering/editing |
 
 ## Optional metadata
 
@@ -57,11 +110,15 @@ Pass `metadata` as a JSON string of values you already collected to cross-check 
 
 Only send fields you have already collected. Name, entity, date of birth, address, and ID are matched against the document; requested limits are checked for sufficient capacity, with non-USD amounts converted at a reasonable rate.
 
+Only string values are used: a value with a non-string type (a number, object, or array), or a `metadata` string that fails to parse as JSON, is silently ignored rather than checked, with no error either way. Send every value as a string, for example `"50000"` rather than `50000`.
+
 ## Analyze a document
 
 You can check the required fields in the [BlindPay API Docs](https://api.blindpay.com/reference#tag/upload/POST/v1/upload/analyze).
 
-The file must be a PDF, JPG, or PNG of up to 5MB. The real format is detected from the file contents, so a mislabeled extension is rejected.
+The file must be a PDF, JPG, or PNG of up to 5MB. The real format is detected from the file contents, so a mislabeled extension is rejected. A PDF protected with a restrictions/owner password (but not a password required to open it) is still readable; BlindPay strips the restriction before analysis.
+
+If the AI provider refuses to process the file, for example because the content trips a safety filter, you get `422 analysis_refused`: `"The document could not be analyzed"`. The response does not say which filter triggered; if you see this consistently for a document that looks legitimate, contact support.
 
 **Remember:** replace `YOUR_API_KEY` with your API key, `in_000000000000` with your instance ID.
 

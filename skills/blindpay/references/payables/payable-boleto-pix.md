@@ -70,6 +70,8 @@ const payable = await response.json()
 
 The code is resolved at registration, so the beneficiary, due date and current `amount` come back real (as a single auto line item). See [Amount semantics](payables.md#amount-semantics) for what actually gets charged at payment time.
 
+If you send `line_items` alongside `boleto_barcode` or `pix_qrcode`, they are discarded: this single auto line item, priced from what the rail resolves, always replaces whatever you sent. Use `note` if you want your own reference text on the payable.
+
 ## PIX
 
 ```bash [cURL]
@@ -104,7 +106,9 @@ const response = await fetch(
 const payable = await response.json()
 ```
 
-The response has the same shape as the boleto one, with `pix_qrcode` set and `boleto_barcode` null. The beneficiary and amount come from the code; a PIX payable has no due date and no document.
+The response has the same shape as the boleto one, with `pix_qrcode` set and `boleto_barcode` null (and `line_items` discarded the same way). The beneficiary and amount come from the code; a PIX payable has no due date and no document.
+
+Only PIX codes with a fixed amount embedded can be registered. A code that lets the payer choose the amount is rejected with `pix_code_amount_required`; ask for a code generated with a fixed amount instead.
 
 ## Attach the document
 

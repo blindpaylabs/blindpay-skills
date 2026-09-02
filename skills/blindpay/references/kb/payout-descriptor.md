@@ -37,6 +37,10 @@ Once enabled, recipients see the customer's name on their bank statements instea
 
 **Note:** Named account requests must be submitted to BlindPay directly and take up to 5 business days to process.
 
+## Reference / memo text
+
+The payout descriptor above is the sender name. Separately, `description` on a payout quote gives the recipient a reference line; it accepts up to 128 characters. See [POBO and COBO](pobo-cobo.md#the-reference-the-supplier-sees) for which part of it actually reaches the beneficiary bank.
+
 ## Related
 
 - [Cut-off Times](cut-off-times.md) · [Customers](kyc.md)

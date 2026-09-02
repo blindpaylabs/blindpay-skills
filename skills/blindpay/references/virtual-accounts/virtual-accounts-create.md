@@ -26,6 +26,8 @@ Make sure the following fields are filled in on the customer before requesting a
 - At least one registered business owner, with `ownership_percentage` and `title`
 - Owners living in the US must have their SSN in `tax_id`
 
+If you set `account_purpose` to `other`, `account_purpose_other` becomes required (up to 512 characters describing the purpose). This isn't specific to virtual accounts: it's enforced the same way on customer create and update whenever `account_purpose` is submitted.
+
 Depending on the banking partner, the API rejects the creation request with a `missing_required_fields` error naming each blank field, so fill these in before calling the endpoint rather than relying on manual review to catch them.
 
 **Note:**
@@ -106,7 +108,7 @@ curl --request POST \
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
-| `banking_partner` | string | Yes | The example value is `cfsb`. Available values depend on your instance and region. |
+| `banking_partner` | `jpmorgan`, `citi`, `hsbc`, `cfsb`, `portage` | Yes | Which value is available depends on your instance and the customer's eligibility, see [Banking partner eligibility](#banking-partner-eligibility) below. |
 | `token` | `USDC`, `USDT`, `USDB` | Yes | Settlement stablecoin. `USDT` requires the linked wallet's network to be Polygon, Ethereum, or Solana. `USDB` is development-only. |
 | `blockchain_wallet_id` | string (`bw_...`) | Yes | Must belong to the same customer. |
 | `sole_proprietor_doc_type` | `master_service_agreement`, `salary_slip`, `bank_statement` | Conditional | Required for individual customers on this banking partner. |
@@ -116,6 +118,12 @@ curl --request POST \
 The response includes `id` (`va_...`), `banking_partner`, `kyc_status`, `token`, `blockchain_wallet_id`, `partner_fee_id`, and a `us` object with `ach`, `wire`, and `rtp` sub-objects (each `{routing_number, account_number}`), plus SWIFT and receiving-bank details once the account is `approved`. Before approval, rail numbers are empty.
 
 You can update `token`, `blockchain_wallet_id`, and `partner_fee_id` on an existing virtual account (`partner_fee_id: null` clears the pin back to the instance default); `banking_partner` cannot be changed after creation.
+
+## Banking partner eligibility
+
+- `cfsb` requires the customer's `country` to be `US`. If the customer is an individual, `business_type` must also be `sole_proprietorship`.
+- `citi` requires the customer to be a business, and its `country` to not be `US`.
+- A business customer requesting `cfsb` or `citi` must also have a `country` on BlindPay's supported list for that banking partner; contact BlindPay if you're unsure whether a given country qualifies.
 
 ## Webhooks
 

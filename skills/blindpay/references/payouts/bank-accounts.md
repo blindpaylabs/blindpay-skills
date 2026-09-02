@@ -1,6 +1,6 @@
 # Bank accounts
 
-Add recipient bank accounts BlindPay pays out to, across SWIFT, ACH, wire, RTP, Pix, SPEI, ACH COP, Transfers, and SEPA rails.
+Add recipient bank accounts BlindPay pays out to, across SWIFT, ACH, wire, RTP, Pix, PIX Safe, TED, SPEI, ACH COP, Transfers, and SEPA rails.
 
 Source: https://blindpay.com/docs/bank-accounts
 
@@ -29,6 +29,8 @@ All bank account data must be valid, even on development instances. Validation (
 | `wire` | United States | ~1 business day |
 | `rtp` | United States | instant |
 | `pix` | Brazil | instant |
+| `pix_safe` | Brazil | instant |
+| `ted` | Brazil | ~1 business day |
 | `spei_bitso` | Mexico | instant |
 | `ach_cop_bitso` | Colombia | ~1 business day |
 | `transfers_bitso` | Argentina | instant |
@@ -42,13 +44,15 @@ High transaction volumes may affect estimated payout delivery times.
 
 | Type | Required fields | Notes |
 | --- | --- | --- |
-| `international_swift` | `name`, `account_class`, `recipient_relationship`, `swift_code_bic`, `swift_account_holder_name`, `swift_account_number_iban`, full beneficiary address, full bank address | See International SWIFT rules below |
-| `ach` | `name`, `recipient_relationship`, `beneficiary_name`, `routing_number`, `account_number`, `account_type`, `account_class`, `address_line_1`, `city`, `state_province_region`, `country`, `postal_code` | Blocked for `light` KYC customers |
-| `wire` | Same as `ach` | Blocked for `light` KYC customers |
-| `rtp` | Same as `wire` | `routing_number` must be RTP-eligible. Blocked for `light` KYC customers |
+| `international_swift` | `name`, `account_class`, `recipient_relationship`, `swift_code_bic`, `swift_account_holder_name`, `swift_account_number_iban`, full beneficiary address, full bank address | See International SWIFT rules below. Also picks up the [compliance fields](#compliance-fields-for-ach-wire-rtp-and-swift) below |
+| `ach` | `name`, `recipient_relationship`, `beneficiary_name`, `routing_number`, `account_number`, `account_type`, `account_class`, `address_line_1`, `city`, `state_province_region`, `country`, `postal_code` | Blocked for `light` KYC customers. Also picks up the [compliance fields](#compliance-fields-for-ach-wire-rtp-and-swift) below |
+| `wire` | Same as `ach` | Blocked for `light` KYC customers. Also picks up the [compliance fields](#compliance-fields-for-ach-wire-rtp-and-swift) below |
+| `rtp` | Same as `wire` | `routing_number` must be RTP-eligible. Blocked for `light` KYC customers. Also picks up the [compliance fields](#compliance-fields-for-ach-wire-rtp-and-swift) below |
 | `pix` | `name`, `pix_key` | `pix_key` can be a CPF, CNPJ, phone, email, or random key |
+| `pix_safe` | `name`, `beneficiary_name`, `pix_safe_cpf_cnpj`, `pix_safe_bank_code`, `pix_safe_branch_code`, `account_number`, `account_type` | Use this instead of `pix` when you have the recipient's bank routing rather than a PIX key. `pix_safe_cpf_cnpj` is an 11-digit CPF or 14-digit CNPJ, `pix_safe_bank_code` is the bank's ISPB code, and `account_number` needs a check-digit suffix (for example `12345-6`) |
+| `ted` | `name`, `beneficiary_name`, `ted_cpf_cnpj`, `ted_bank_code`, `ted_branch_code`, `account_number`, `account_type` | Same field shape as `pix_safe`, except `ted_bank_code` is keyed by COMPE instead of ISPB |
 | `spei_bitso` | `name`, `spei_protocol`, `spei_clabe`, `beneficiary_name` | `spei_institution_code` required for `debitcard`/`phonenum` protocols |
-| `ach_cop_bitso` | `name`, `ach_cop_beneficiary_first_name`, `ach_cop_beneficiary_last_name`, `ach_cop_document_id`, `ach_cop_document_type`, `ach_cop_email`, `ach_cop_bank_code`, `ach_cop_bank_account`, `account_type` | |
+| `ach_cop_bitso` | `name`, `ach_cop_beneficiary_first_name`, `ach_cop_beneficiary_last_name`, `ach_cop_document_id`, `ach_cop_document_type`, `ach_cop_email`, `ach_cop_bank_code`, `ach_cop_bank_account`, `account_type` | `ach_cop_document_type` is `CC`, `CE`, `NIT`, `PASS`, or `PEP` |
 | `transfers_bitso` | `name`, `transfers_type`, `transfers_account`, `beneficiary_name` | `transfers_type` is `CVU`, `CBU`, or `ALIAS` |
 | `sepa` | `name`, `account_class`, `sepa_iban`, `sepa_beneficiary_bic`, `sepa_beneficiary_legal_name`, `sepa_beneficiary_address_line_1`, `sepa_beneficiary_city`, `sepa_beneficiary_postal_code`, `sepa_beneficiary_country` | The IBAN's country code must match `sepa_beneficiary_country`. Some destinations are individual-only; see [Payment methods](../kb/payment-methods.md#sepa-destinations) |
 
@@ -116,7 +120,9 @@ curl --request POST \
   "state_province_region": "ES",
   "country": "BR",
   "postal_code": "29101320",
-  "recipient_relationship": "first_party"
+  "recipient_relationship": "first_party",
+  "phone_number": "+5527999999999",
+  "tax_id": "12345678900"
 }'
 ```
 
@@ -171,6 +177,40 @@ curl --request POST \
   "type": "pix",
   "name": "Display Name",
   "pix_key": "<Replace this>"
+}'
+```
+
+```bash [🇧🇷 PIX Safe]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/customers/re_000000000000/bank-accounts \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "type": "pix_safe",
+  "name": "Display Name",
+  "beneficiary_name": "Jane Doe",
+  "pix_safe_cpf_cnpj": "12345678900",
+  "pix_safe_bank_code": "<Replace this>",
+  "pix_safe_branch_code": "0001",
+  "account_number": "123456-7",
+  "account_type": "checking"
+}'
+```
+
+```bash [🇧🇷 TED]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/customers/re_000000000000/bank-accounts \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "type": "ted",
+  "name": "Display Name",
+  "beneficiary_name": "Jane Doe",
+  "ted_cpf_cnpj": "12345678900",
+  "ted_bank_code": "<Replace this>",
+  "ted_branch_code": "0001",
+  "account_number": "123456-7",
+  "account_type": "checking"
 }'
 ```
 
@@ -272,29 +312,112 @@ The same connection is never turned into two bank accounts, even if Plaid redeli
 
 BlindPay never returns or stores the Plaid access token in plaintext anywhere reachable from the API, logs, or webhook payloads.
 
-## International SWIFT rules
+## Compliance fields for ACH, wire, RTP, and SWIFT
 
-International SWIFT accounts have extra country-conditional required fields.
+`ach`, `wire`, `rtp`, and `international_swift` bank accounts all pick up the same three country-conditional compliance fields. `pix`, `pix_safe`, `ted`, `spei_bitso`, `ach_cop_bitso`, `transfers_bitso`, and `sepa` never require them.
 
 **Business accounts**
 
-- `business_industry` (NAICS code) is required when the customer or account class is `"business"`.
-
-**Individual customers**
-
-- `tax_id` must be the local tax ID for the beneficiary's country (for example, CPF for Brazil, SSN for the US). It is validated and formatted per country where required.
+- `business_industry` (NAICS code) is required when `account_class` is `business`.
 
 **Phone number**
 
-- `phone_number` is required when the beneficiary's country is one of: BR, CN, CO, HK, MY, MX, PH, UG, UY.
+- `phone_number` is required when the beneficiary's country (`country` on `ach`/`wire`/`rtp`, `swift_beneficiary_country` on `international_swift`) is one of: BR, CN, CO, HK, MY, MX, PH, UG, UY.
 
 **Tax ID**
 
-- `tax_id` is required when the beneficiary's country is one of: AR, BY, BR, CL, CN, CO, CR, EC, GT, HN, JP, KZ, KR, MX, PK, PE, PH, RU, TH, UY.
+- `tax_id` is required when the beneficiary's country (same field as above) is one of: AR, BY, BR, CL, CN, CO, CR, EC, GT, HN, JP, KZ, KR, MX, PK, PE, PH, RU, TH, UY. It's the local tax ID for that country (for example, CPF for Brazil, SSN for the US).
+
+## International SWIFT rules
+
+International SWIFT accounts also have these extra fields, on top of the compliance fields above.
+
+**SWIFT payment code**
+
+`swift_payment_code` is required when `swift_bank_country` is one of: AE, BH, CH, CN, HK, ID, IN, JP, KE, PH, PK, ZA. Omitting it for one of these countries fails bank account creation; leaving it unresolved on an account that already exists fails the payout instead.
+
+**India (IFSC)**
+
+`swift_ifsc_branch_code` is required when `swift_bank_country` is `IN`, in the format `AAAA0NNNNNN`: a 4-letter bank code, then `0`, then a 6-character branch code (for example `HDFC0001234`). BlindPay uppercases it automatically.
+
+**Intermediary bank (optional)**
+
+When the payment needs to route through a correspondent bank, add:
+
+- `swift_intermediary_bank_swift_code_bic`
+- `swift_intermediary_bank_account_number_iban`
+- `swift_intermediary_bank_name`
+- `swift_intermediary_bank_country`
+
+All four are optional and independent of each other; omit them if the beneficiary's bank has a direct correspondent relationship.
+
+**Format constraints**
+
+- `swift_code_bic` must be 8 or 11 characters, uppercase, in standard SWIFT/BIC format.
+- `swift_beneficiary_address_line_1` and `_line_2` combined must be 70 characters or fewer; the full beneficiary address (both lines, city, state/province, postal code, country) must be 140 characters or fewer combined.
+- `swift_beneficiary_state_province_region` is exactly 2 alphanumeric characters (some countries use a numeric ISO 3166-2 code here instead of letters), and `swift_beneficiary_postal_code` is capped at 16 alphanumeric characters. Both are uppercased automatically.
+- `swift_account_holder_name` is capped at 50 characters, `swift_bank_name` at 80.
 
 **Note:**
 
 For international SWIFT payouts, compliance documents are collected after the payout is created, not at quote creation time. The payout is placed `on_hold` until the required documents are submitted and approved.
+
+## Look up available rails and fields
+
+These endpoints are public: no API key required for `/available/rails` and `/available/bank-details`.
+
+**List payout rails.** `GET /available/rails` returns the same rail list as the [Supported payout rails](#supported-payout-rails) table above, live: an array of `{ label, value, country }`. `country` is a display hint for the rail picker's flag icon, not a claim that BlindPay has a rail in that country (SEPA, for example, surfaces `DE` as its default flag).
+
+**Fetch a rail's required fields.** Instead of hardcoding the [Required fields per type](#required-fields-per-type) table above, fetch it at runtime:
+
+```bash [cURL]
+curl --request GET \
+  --url 'https://api.blindpay.com/v1/available/bank-details?rail=ach'
+```
+
+Each item in the response array is a field descriptor:
+
+| Property | Type | Meaning |
+| --- | --- | --- |
+| `key` | string | The bank account field this maps to |
+| `label` | string | Display label |
+| `regex` | string | Validation pattern, empty string if unconstrained |
+| `required` | boolean | Whether the field is always required |
+| `items` | array | Picklist options (`{label, value, is_active}`), present when the field is a picklist |
+| `requiredWhen` | object | `{field, operator, values}`: the field becomes required only when another field's value matches |
+
+`requiredWhen.operator` is one of `in`, `eq`, `notIn`, or `notEq`.
+
+**Note:**
+
+`requiredWhen` is guidance for your form, not enforcement: this endpoint never validates across fields. The actual requiredness is enforced when you create the bank account, so send the field whenever `requiredWhen` matches or the create call rejects it.
+
+For `spei_bitso` and `ach_cop_bitso`, the bank-code field's `items` picklist is fetched live from BlindPay's banking partner, and an inactive bank still appears in it flagged `is_active: false` rather than being filtered out server-side; filter those out yourself. For `pix_safe` and `ted`, it comes from BlindPay's own bundled Brazilian bank list instead, and is always active. Every other rail's bank-code field has no picklist at all.
+
+**Look up a bank by SWIFT/BIC code.** `GET /available/swift/{swift}` looks up a bank's name, city, branch, and country for a given SWIFT/BIC code, useful for prefilling `swift_bank_name` and the bank address fields before the customer confirms them. `swift` must be exactly 8 or 11 uppercase alphanumeric characters (for example `BOFAUS3NLMA`); anything else fails with a 400 `VALIDATION_FAILED` error before the lookup runs. An 11-character code ending in `XXX` (a bank's head-office suffix) is looked up by its 8-character base code instead; `CHASSGSGXXX` is queried as `CHASSGSG`.
+
+```bash [Request]
+curl --request GET \
+  --url https://api.blindpay.com/v1/available/swift/BOFAUS3NLMA \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+```json [Response]
+[
+  {
+    "id": "416",
+    "bank": "BANK OF AMERICA, N.A.",
+    "city": "NEW JERSEY",
+    "branch": "LENDING SERVICES AND OPERATIONS (LSOP)",
+    "swiftCode": "BOFAUS3NLMA",
+    "swiftCodeLink": "https://bank.codes/swift-code/united-states/bofaus3nlma/",
+    "country": "United States",
+    "countrySlug": "united-states"
+  }
+]
+```
+
+A code with no match returns `200` with an empty array `[]`, not a `404`. If the upstream lookup service errors, BlindPay returns a 400 `retrieve_swift_code_failed` with the upstream error attached, or a 500 `swift_code_api_fetch_failed` for anything unexpected.
 
 ## Response fields
 

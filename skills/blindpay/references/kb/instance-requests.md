@@ -28,7 +28,7 @@ Each RFI is built as a list of sections. Each section has a title, a description
 
 ## Email notifications
 
-When an instance RFI is opened, BlindPay emails **every active member of your instance**. The cadence is:
+When an instance RFI is opened, BlindPay emails **every active member of your instance** (unless you've scoped notifications to specific compliance emails, see below). The cadence is:
 
 | Day | Email | Purpose |
 | --- | --- | --- |
@@ -41,7 +41,7 @@ All emails come from `compliance@blindpay.com` and link to your dashboard at `ap
 
 **Note:**
 
-Emails are sent to every non-deleted user in your instance. To control who receives them, manage your team's membership in **Settings → Members**.
+Emails are sent to every non-deleted user in your instance, unless you've set specific **compliance emails** (up to 20 addresses) on the instance's settings. When that list is set, instance RFI notifications go only to those addresses instead of the whole team. Manage either your team's membership or the compliance email list from **Settings → Members** and **Settings → Instance**, or with [`PUT /instances/{instance_id}`](../essentials/instances.md#manage-your-instance).
 
 ## Responding to an instance RFI
 
@@ -58,6 +58,38 @@ Once submitted, the RFI moves to `submitted`, the reminder emails stop, and comp
 ## Deadlines and expiry
 
 If 27 days pass without a submission, the RFI is marked expired and a final email is sent to your team. Unlike customer RFIs, **nothing happens to your account automatically**: no status changes, no blocked payments. Our compliance team follows up with you directly if the information is still required.
+
+## API integration
+
+If you'd rather handle instance RFIs programmatically instead of through the dashboard, the same request the dashboard uses is available directly.
+
+```bash [cURL]
+curl --request GET \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/rfi \
+  --header 'Authorization: Bearer YOUR_API_KEY'
+```
+
+Returns the open (pending) RFI, or `null` if none is open.
+
+```bash [cURL]
+curl --request POST \
+  --url https://api.blindpay.com/v1/instances/in_000000000000/rfi \
+  --header 'Authorization: Bearer YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "business_description": "..."
+  }'
+```
+
+The body is a flat object keyed by each field's `key`, the same shape as a [customer RFI response](../essentials/rfi.md#submit-a-response). Each field is validated against the open RFI's own request definition: a required field must be 1-4096 characters, a field with a `regex` must match it, and a field with `multiple: true` must be an array of up to 20 URLs. Keys not listed in the request are rejected.
+
+If a section asks for an ID document with a type dropdown and a matching `..._back_file` upload field, the back file becomes required unless the selected document type is `PASSPORT`.
+
+**Warning:**
+
+A submission to an RFI that's no longer open doesn't return an error: it responds `200 { "success": false, "reason": "no_pending_rfi" }` (or `"already_resolved"` if someone else just submitted it first). Check `success` in the body rather than only handling non-2xx responses.
+
+Submitting an instance RFI never changes your instance's or onboarding status; it's a standalone compliance review, unlike a customer RFI response.
 
 ## Best practices
 
