@@ -24,7 +24,7 @@ Transfer limits are calculated on the stablecoin amount transferred. Each custom
 2. Create a development instance (see essentials/instances.md)
 3. Create your API key (see essentials/api-keys.md)
 
-The customer must exist and have `kyc_status` of `approved`; you cannot request a limit increase for a customer still in KYC review. You also need the supporting document already hosted at a URL, for example via the [Upload](upload.md) endpoint.
+The customer must exist and have `kyc_status` of `approved`; you cannot request a limit increase for a customer still in KYC review. You also need the supporting documents already hosted at URLs, for example via the [Upload](upload.md) endpoint.
 
 Only one request can be in flight per customer at a time. If the customer already has a request with `status: "in_review"`, a new request returns `400 customer_already_has_limit_increase_in_review`. Wait for the existing request to be approved or rejected before submitting another.
 
@@ -32,7 +32,7 @@ Each requested amount (`per_transaction`, `daily`, `monthly`) is capped at 100,0
 
 ## Supporting document types
 
-Pick the `supporting_document_type` that matches the customer type and the document you are submitting:
+Pick the document `type` that matches the customer type and the document you are submitting:
 
 | Customer type | Accepted values |
 | --- | --- |
@@ -56,10 +56,14 @@ curl --request POST \
     "per_transaction": 100000,
     "daily": 200000,
     "monthly": 1000000,
-    "supporting_document_type": "individual_bank_statement",
-    "supporting_document_file": "https://example.com/document.pdf"
+    "supporting_documents": [
+      { "type": "individual_bank_statement", "file": "https://example.com/statement.pdf" },
+      { "type": "individual_tax_return", "file": "https://example.com/tax-return.pdf" }
+    ]
   }'
 ```
+
+You can attach up to 5 documents in `supporting_documents`. For a single document you can still send the shorthand `supporting_document_type` and `supporting_document_file` fields instead.
 
 The response returns the request's ID:
 
@@ -86,7 +90,8 @@ Each entry carries the requested amounts, the review status, and, once reviewed,
 | `status` | `in_review`, `approved`, or `rejected` |
 | `per_transaction`, `daily`, `monthly` | The amounts you requested, in USD cents |
 | `approved_per_transaction`, `approved_daily`, `approved_monthly` | What compliance actually granted; can be lower than requested. `null` until reviewed |
-| `supporting_document_type`, `supporting_document_file` | The document submitted with the request |
+| `supporting_documents` | Every document submitted with the request, as `{ type, file }` |
+| `supporting_document_type`, `supporting_document_file` | The first document, kept for backward compatibility |
 
 **Note:**
 
