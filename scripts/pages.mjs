@@ -1,6 +1,9 @@
 // Source of truth for which docs pages become skill references, and in what order.
 // Each group maps to references/<dir>/ in the skill. `files` are docs-relative
 // paths without the .md extension; `glob: 'kb'` pulls every page in that folder.
+// A `manual` group is hand-maintained instead of synced: its files live in
+// references/<dir>/ permanently, and the sync script only indexes them, taking
+// each file's title and description from its own H1 and first paragraph.
 
 export const GROUPS = [
   {
@@ -96,7 +99,9 @@ export const GROUPS = [
   {
     dir: 'migrations',
     title: 'Migration guides (moving from another provider)',
-    glob: 'migrations',
+    // The per-provider docs pages are consolidated by hand into one guide;
+    // syncing the 17 standalone pages would only duplicate it.
+    manual: ['migrate-to-blindpay.md'],
   },
   {
     dir: 'integrations',
