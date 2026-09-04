@@ -250,4 +250,4 @@ Transfers are in beta. USDC transfers can move across Ethereum, Polygon, Base, a
 - [Payins](../payins/payins.md): collect fiat and deliver stablecoins to a wallet
 - [Payouts](../payouts/payouts.md): convert a wallet's stablecoin balance to fiat
 - [Send](send.md): move stablecoins between wallets
-- [Webhooks](../essentials/webhooks.md): `wallet.new`, `wallet.inbound`
+- [Webhooks](../essentials/webhooks.md): `wallet.new`, `wallet.update`, `wallet.inbound`

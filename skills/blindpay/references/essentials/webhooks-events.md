@@ -72,6 +72,7 @@ Every webhook endpoint you register receives events from the catalog below, unle
 | Event | Fires when |
 | --- | --- |
 | `wallet.new` | A managed [wallet](../wallets/wallets.md) is created for a customer |
+| `wallet.update` | A managed wallet changes, currently every [yield](../wallets/wallets.md#yield) status change |
 | `wallet.inbound` | A stablecoin deposit is detected in a managed wallet |
 
 ## Limit increase
